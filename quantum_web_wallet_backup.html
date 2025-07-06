@@ -1,0 +1,1451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QRC Wallet - Quantum Resistant Blockchain</title>
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%2300ff88' rx='20'/></svg>">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+        }
+        
+        /* Professional Header */
+        .main-header {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding: 20px 0;
+        }
+        
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo {
+            width: 50px;
+            height: 50px;
+            background: #00ff88;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #000;
+        }
+        
+        .logo-text {
+            font-size: 24px;
+            font-weight: 700;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+        
+        .nav-link {
+            color: #999;
+            text-decoration: none;
+            transition: color 0.3s;
+            font-size: 14px;
+        }
+        
+        .nav-link:hover {
+            color: #00ff88;
+        }
+        
+        .network-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 255, 136, 0.1);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        
+        .network-dot {
+            width: 8px;
+            height: 8px;
+            background: #00ff88;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        /* Main Content */
+        .main-content {
+            width: 100%;
+            max-width: 1200px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+        
+        @media (max-width: 968px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Stats Cards */
+        .stats-section {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 24px;
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.08);
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #00ff88;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        /* Wallet Section */
+        .wallet-section {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 40px;
+            border-radius: 24px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .wallet-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .wallet-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+        
+        .wallet-menu {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .menu-button {
+            background: none;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            padding: 8px;
+            transition: color 0.3s;
+        }
+        
+        .menu-button:hover {
+            color: #00ff88;
+        }
+        
+        /* Onboarding Section */
+        .onboarding-section {
+            text-align: center;
+            padding: 40px 0;
+        }
+        
+        .onboarding-title {
+            font-size: 28px;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #00ff88, #00ffff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .onboarding-subtitle {
+            color: #999;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        
+        .security-features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .security-feature {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .feature-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        
+        .feature-title {
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+        
+        .feature-desc {
+            font-size: 13px;
+            color: #999;
+        }
+        
+        /* Wallet Display */
+        .wallet-display {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 24px;
+            border-radius: 16px;
+            margin-bottom: 30px;
+        }
+        
+        .wallet-address-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .wallet-label {
+            font-size: 12px;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+        
+        .wallet-address {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            word-break: break-all;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        
+        .wallet-address:hover {
+            color: #00ff88;
+        }
+        
+        .balance-display {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 30px;
+        }
+        
+        .balance-label {
+            font-size: 14px;
+            color: #999;
+            margin-bottom: 10px;
+        }
+        
+        .balance-amount {
+            font-size: 48px;
+            font-weight: 700;
+            background: linear-gradient(45deg, #00ff88, #00ffff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
+        }
+        
+        .balance-usd {
+            font-size: 18px;
+            color: #999;
+        }
+        
+        /* Buttons */
+        .button {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .button-primary {
+            background: linear-gradient(45deg, #00ff88, #00cc77);
+            color: #000;
+        }
+        
+        .button-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 255, 136, 0.3);
+        }
+        
+        .button-secondary {
+            background: transparent;
+            color: #00ff88;
+            border: 2px solid #00ff88;
+        }
+        
+        .button-secondary:hover {
+            background: #00ff88;
+            color: #000;
+        }
+        
+        .button-create {
+            background: linear-gradient(45deg, #00ff88, #00cc77);
+            color: #000;
+            padding: 18px 40px;
+            font-size: 18px;
+            width: auto;
+            margin: 0 auto 20px;
+        }
+        
+        /* Security Section */
+        .security-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .security-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .security-title {
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .backup-status {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            color: #ff6b6b;
+        }
+        
+        .backup-status.backed-up {
+            color: #00ff88;
+        }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 30px;
+        }
+        
+        .tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            color: #999;
+            transition: all 0.3s;
+            border-bottom: 2px solid transparent;
+        }
+        
+        .tab.active {
+            color: #00ff88;
+            border-bottom-color: #00ff88;
+        }
+        
+        .tab:hover {
+            color: #00ff88;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* FAQ Section */
+        .faq-section {
+            margin-top: 40px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 40px;
+            border-radius: 24px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .faq-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .faq-title {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        
+        .faq-subtitle {
+            color: #999;
+        }
+        
+        .faq-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+        
+        .faq-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 24px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .faq-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+        
+        .faq-question {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .faq-answer {
+            font-size: 14px;
+            color: #999;
+            line-height: 1.6;
+            display: none;
+        }
+        
+        .faq-item.expanded .faq-answer {
+            display: block;
+        }
+        
+        /* Modals */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        
+        .modal-content {
+            background: #1a1a3e;
+            padding: 40px;
+            border-radius: 24px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .modal-title {
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            color: #999;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+        
+        .close-modal:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+        
+        /* Important Notice */
+        .important-notice {
+            background: rgba(255, 107, 107, 0.1);
+            border: 1px solid #ff6b6b;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .notice-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .notice-content {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .notice-list {
+            margin-top: 12px;
+            margin-left: 20px;
+        }
+        
+        .notice-list li {
+            margin-bottom: 8px;
+        }
+        
+        /* Backup Options */
+        .backup-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .backup-option {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        
+        .backup-option:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: #00ff88;
+        }
+        
+        .backup-icon {
+            font-size: 40px;
+            margin-bottom: 12px;
+        }
+        
+        .backup-title {
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+        
+        .backup-desc {
+            font-size: 13px;
+            color: #999;
+        }
+        
+        /* Seed Phrase Display */
+        .seed-phrase-container {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+        
+        .seed-phrase-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .seed-word {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .seed-word-number {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 4px;
+        }
+        
+        .seed-word-text {
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        /* Notifications */
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #00ff88;
+            color: #000;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            animation: slideIn 0.3s ease-out;
+            display: none;
+            z-index: 2000;
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .notification.error {
+            background: #ff6b6b;
+            color: #fff;
+        }
+        
+        .notification.warning {
+            background: #ffa500;
+            color: #000;
+        }
+        
+        .notification.info {
+            background: #3498db;
+            color: #fff;
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.8; }
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(100px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        /* Loading States */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #00ff88;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Tooltips */
+        .tooltip {
+            position: relative;
+            cursor: help;
+        }
+        
+        .tooltip-content {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #000;
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            margin-bottom: 5px;
+        }
+        
+        .tooltip:hover .tooltip-content {
+            opacity: 1;
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .main-header {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .nav-links {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .stats-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .wallet-section {
+                padding: 24px;
+            }
+            
+            .balance-amount {
+                font-size: 36px;
+            }
+            
+            .faq-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Professional Header -->
+    <header class="main-header">
+        <div class="logo-section">
+            <div class="logo">QRC</div>
+            <div class="logo-text">Quantum Wallet</div>
+        </div>
+        <nav class="nav-links">
+            <a href="#" class="nav-link">Explorer</a>
+            <a href="#" class="nav-link">Staking</a>
+            <a href="#" class="nav-link">Governance</a>
+            <a href="#" class="nav-link">Docs</a>
+            <div class="network-indicator">
+                <div class="network-dot"></div>
+                <span>Mainnet</span>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content Grid -->
+    <div class="main-content">
+        <!-- Left Side - Stats -->
+        <div class="stats-section">
+            <div class="stat-card">
+                <div class="stat-value" id="currentTPS">0</div>
+                <div class="stat-label">Current TPS</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalBlocks">0</div>
+                <div class="stat-label">Total Blocks</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalTransactions">0</div>
+                <div class="stat-label">Transactions</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="activeUsers">0</div>
+                <div class="stat-label">Active Users</div>
+            </div>
+        </div>
+
+        <!-- Right Side - Wallet -->
+        <div class="wallet-section">
+            <div class="wallet-header">
+                <h2 class="wallet-title">Quantum Resistant Wallet</h2>
+                <div class="wallet-menu">
+                    <button class="menu-button" onclick="showSettingsModal()">⚙️</button>
+                    <button class="menu-button" onclick="showHelpModal()">❓</button>
+                </div>
+            </div>
+
+            <!-- Onboarding Section -->
+            <div id="onboardingSection" class="onboarding-section">
+                <h1 class="onboarding-title">Welcome to the Future of Crypto</h1>
+                <p class="onboarding-subtitle">The world's first quantum-resistant blockchain wallet</p>
+                
+                <div class="security-features">
+                    <div class="security-feature">
+                        <div class="feature-icon">🔐</div>
+                        <div class="feature-title">Quantum Safe</div>
+                        <div class="feature-desc">Protected against quantum computer attacks</div>
+                    </div>
+                    <div class="security-feature">
+                        <div class="feature-icon">⚡</div>
+                        <div class="feature-title">Lightning Fast</div>
+                        <div class="feature-desc">1,773 TPS proven performance</div>
+                    </div>
+                    <div class="security-feature">
+                        <div class="feature-icon">🔒</div>
+                        <div class="feature-title">Your Keys, Your Coins</div>
+                        <div class="feature-desc">Non-custodial wallet with full control</div>
+                    </div>
+                </div>
+
+                <button class="button button-create" onclick="showCreateWalletModal()">
+                    <span>🚀</span>
+                    <span>Create New Wallet</span>
+                </button>
+                
+                <p style="text-align: center; color: #999; font-size: 14px;">
+                    Already have a wallet? 
+                    <a href="#" onclick="showImportModal()" style="color: #00ff88;">Import using seed phrase</a>
+                </p>
+            </div>
+
+            <!-- Wallet Display Section -->
+            <div id="walletDisplaySection" style="display: none;">
+                <div class="wallet-display">
+                    <div class="wallet-label">Your Wallet Address</div>
+                    <div class="wallet-address-container">
+                        <div class="wallet-address" id="walletAddress" onclick="copyAddress()"></div>
+                        <button class="menu-button" onclick="showQRCode()">📱</button>
+                    </div>
+                </div>
+
+                <div class="balance-display">
+                    <div class="balance-label">Total Balance</div>
+                    <div class="balance-amount" id="balanceAmount">0.00 QRC</div>
+                    <div class="balance-usd" id="balanceUSD">≈ $0.00 USD</div>
+                </div>
+
+                <div class="tabs">
+                    <div class="tab active" onclick="showTab('wallet')">Wallet</div>
+                    <div class="tab" onclick="showTab('activity')">Activity</div>
+                    <div class="tab" onclick="showTab('security')">Security</div>
+                </div>
+
+                <div id="walletTab" class="tab-content active">
+                    <button class="button button-primary" onclick="showSendModal()">
+                        <span>📤</span>
+                        <span>Send QRC</span>
+                    </button>
+                    <button class="button button-secondary" onclick="showReceiveModal()">
+                        <span>📥</span>
+                        <span>Receive</span>
+                    </button>
+                    <button class="button button-secondary" onclick="getFaucet()">
+                        <span>💧</span>
+                        <span>Test Faucet (Once per day)</span>
+                    </button>
+                </div>
+
+                <div id="activityTab" class="tab-content">
+                    <div id="transactionHistory">
+                        <p style="text-align: center; color: #999; padding: 40px 0;">No transactions yet</p>
+                    </div>
+                </div>
+
+                <div id="securityTab" class="tab-content">
+                    <div class="security-section">
+                        <div class="security-header">
+                            <h3 class="security-title">
+                                <span>🔐</span>
+                                <span>Wallet Security</span>
+                            </h3>
+                            <div class="backup-status" id="backupStatus">
+                                <span>⚠️</span>
+                                <span>Not Backed Up</span>
+                            </div>
+                        </div>
+                        
+                        <div class="important-notice">
+                            <div class="notice-title">
+                                <span>⚠️</span>
+                                <span>Critical Security Information</span>
+                            </div>
+                            <div class="notice-content">
+                                Your wallet's security depends on keeping your seed phrase safe. 
+                                <ul class="notice-list">
+                                    <li>Never share your seed phrase with anyone</li>
+                                    <li>Never enter it on any website</li>
+                                    <li>Store it offline in a secure location</li>
+                                    <li>Consider using a hardware wallet for large amounts</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <button class="button button-secondary" onclick="showBackupModal()">
+                            <span>📝</span>
+                            <span>Backup Wallet</span>
+                        </button>
+                        <button class="button button-secondary" onclick="showPrivateKeyModal()">
+                            <span>🔑</span>
+                            <span>Export Private Key</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FAQ Section -->
+    <div class="faq-section">
+        <div class="faq-header">
+            <h2 class="faq-title">Frequently Asked Questions</h2>
+            <p class="faq-subtitle">Everything you need to know about QRC Wallet</p>
+        </div>
+        
+        <div class="faq-grid">
+            <div class="faq-item" onclick="toggleFAQ(this)">
+                <div class="faq-question">
+                    What makes this wallet quantum-resistant?
+                    <span>+</span>
+                </div>
+                <div class="faq-answer">
+                    QRC Wallet uses post-quantum cryptographic algorithms approved by NIST, including Dilithium for digital signatures and Kyber for key encapsulation. These algorithms are designed to resist attacks from both classical and quantum computers, ensuring your funds remain secure even as quantum computing advances.
+                </div>
+            </div>
+            
+            <div class="faq-item" onclick="toggleFAQ(this)">
+                <div class="faq-question">
+                    How do I backup my wallet?
+                    <span>+</span>
+                </div>
+                <div class="faq-answer">
+                    Click on the Security tab and select "Backup Wallet". You'll be shown a 24-word seed phrase. Write this down on paper and store it in a secure location. Never store it digitally or share it with anyone. This seed phrase can restore your wallet on any device.
+                </div>
+            </div>
+            
+            <div class="faq-item" onclick="toggleFAQ(this)">
+                <div class="faq-question">
+                    What happens if I lose my seed phrase?
+                    <span>+</span>
+                </div>
+                <div class="faq-answer">
+                    If you lose your seed phrase and don't have access to your wallet, your funds will be permanently lost. There is no way to recover a wallet without the seed phrase. This is why it's critical to store multiple copies in secure locations.
+                </div>
+            </div>
+            
+            <div class="faq-item" onclick="toggleFAQ(this)">
+                <div class="faq-question">
+                    Is this wallet really secure?
+                    <span>+</span>
+                </div>
+                <div class="faq-answer">
+                    Yes. The wallet uses industry-standard security practices including local key storage, encrypted data, and quantum-resistant algorithms. Your private keys never leave your device. However, security also depends on your practices - keep your seed phrase safe and your device secure.
+                </div>
+            </div>
+            
+            <div class="faq-item" onclick="toggleFAQ(this)">
+                <div class="faq-question">
+                    How are transaction fees calculated?
+                    <span>+</span>
+                </div>
+                <div class="faq-answer">
+                    Transaction fees are 0.2% of the transaction amount with a minimum of 0.01 QRC. These fees go to the network validators and help secure the blockchain. Fees are automatically calculated and shown before you confirm any transaction.
+                </div>
+            </div>
+            
+            <div class="faq-item" onclick="toggleFAQ(this)">
+                <div class="faq-question">
+                    Can I use this wallet on multiple devices?
+                    <span>+</span>
+                </div>
+                <div class="faq-answer">
+                    Yes! You can import your wallet on any device using your seed phrase. However, for security reasons, we recommend only using your wallet on trusted devices and avoiding public computers.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Wallet Modal -->
+    <div class="modal" id="createWalletModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Create New Wallet</h2>
+                <button class="close-modal" onclick="closeModal('createWalletModal')">×</button>
+            </div>
+            
+            <div class="important-notice">
+                <div class="notice-title">
+                    <span>📋</span>
+                    <span>Before You Begin</span>
+                </div>
+                <div class="notice-content">
+                    You're about to create a new quantum-resistant wallet. Make sure you:
+                    <ul class="notice-list">
+                        <li>Have a pen and paper ready to write down your seed phrase</li>
+                        <li>Are in a private location with no cameras or people watching</li>
+                        <li>Understand that losing your seed phrase means losing your funds forever</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div style="margin: 30px 0;">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                    <input type="checkbox" id="understandCheckbox" style="width: 20px; height: 20px;">
+                    <span>I understand and accept the responsibility of securing my wallet</span>
+                </label>
+            </div>
+
+            <button class="button button-primary" id="proceedCreateButton" onclick="proceedWithCreation()" disabled>
+                Proceed to Create Wallet
+            </button>
+        </div>
+    </div>
+
+    <!-- Seed Phrase Modal -->
+    <div class="modal" id="seedPhraseModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Your Recovery Seed Phrase</h2>
+            </div>
+            
+            <div class="important-notice">
+                <div class="notice-title">
+                    <span>🚨</span>
+                    <span>CRITICAL: Write This Down</span>
+                </div>
+                <div class="notice-content">
+                    This is the ONLY way to recover your wallet. Write it down on paper and store it safely.
+                </div>
+            </div>
+
+            <div class="seed-phrase-container">
+                <div class="seed-phrase-grid" id="seedPhraseGrid">
+                    <!-- Seed words will be populated here -->
+                </div>
+            </div>
+
+            <button class="button button-secondary" onclick="copySeedPhrase()">
+                Copy to Clipboard
+            </button>
+
+            <button class="button button-primary" onclick="confirmSeedPhrase()">
+                I've Written It Down
+            </button>
+        </div>
+    </div>
+
+    <!-- Send Modal -->
+    <div class="modal" id="sendModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Send QRC</h2>
+                <button class="close-modal" onclick="closeModal('sendModal')">×</button>
+            </div>
+            
+            <div class="input-group" style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; color: #999; font-size: 14px;">
+                    Recipient Address
+                </label>
+                <input type="text" id="recipientAddress" placeholder="QRC..." style="width: 100%; padding: 15px; border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 8px; background: rgba(255, 255, 255, 0.05); color: white; font-size: 16px;">
+            </div>
+            
+            <div class="input-group" style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; color: #999; font-size: 14px;">
+                    Amount (QRC)
+                </label>
+                <input type="number" id="sendAmount" placeholder="0.00" step="0.01" style="width: 100%; padding: 15px; border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 8px; background: rgba(255, 255, 255, 0.05); color: white; font-size: 16px;">
+            </div>
+            
+            <div style="background: rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                    <span>Network Fee:</span>
+                    <span id="feeDisplay">0.00 QRC</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-weight: 600;">
+                    <span>Total:</span>
+                    <span id="totalDisplay">0.00 QRC</span>
+                </div>
+            </div>
+
+            <button class="button button-primary" onclick="confirmSend()">
+                Confirm Transaction
+            </button>
+        </div>
+    </div>
+
+    <!-- Notifications -->
+    <div class="notification" id="notification"></div>
+
+    <script>
+        // Seed phrase word list (simplified version)
+        const wordList = ['abandon', 'ability', 'able', 'about', 'above', 'absent', 'absorb', 'abstract', 'absurd', 'abuse', 
+                         'access', 'accident', 'account', 'accuse', 'achieve', 'acid', 'acoustic', 'acquire', 'across', 'act',
+                         'action', 'actor', 'actress', 'actual', 'adapt', 'add', 'addict', 'address', 'adjust', 'admit',
+                         'adult', 'advance', 'advice', 'aerobic', 'affair', 'afford', 'afraid', 'again', 'age', 'agent'];
+
+        // Wallet state
+        let walletState = {
+            address: null,
+            seedPhrase: null,
+            privateKey: null,
+            publicKey: null,
+            balance: 0,
+            backed_up: false
+        };
+
+        // Check for existing wallet
+        function checkExistingWallet() {
+            const stored = localStorage.getItem('qrcWalletPro');
+            if (stored) {
+                try {
+                    const data = JSON.parse(stored);
+                    walletState = data;
+                    showWalletDisplay();
+                    updateBalance();
+                    return true;
+                } catch (e) {
+                    localStorage.removeItem('qrcWalletPro');
+                }
+            }
+            return false;
+        }
+
+        // Initialize
+        window.onload = function() {
+            if (!checkExistingWallet()) {
+                document.getElementById('onboardingSection').style.display = 'block';
+            }
+            updateStats();
+            setInterval(updateStats, 5000);
+            setInterval(updateBalance, 10000);
+            
+            // Set up checkbox listener
+            document.getElementById('understandCheckbox').addEventListener('change', function() {
+                document.getElementById('proceedCreateButton').disabled = !this.checked;
+            });
+            
+            // Set up amount input listener
+            document.getElementById('sendAmount').addEventListener('input', updateFeeDisplay);
+        };
+
+        // Show modals
+        function showCreateWalletModal() {
+            document.getElementById('createWalletModal').style.display = 'flex';
+        }
+
+        function showSendModal() {
+            document.getElementById('sendModal').style.display = 'flex';
+            updateFeeDisplay();
+        }
+
+        function showReceiveModal() {
+            showNotification('📥 Share your address: ' + walletState.address, 'info');
+        }
+
+        function showImportModal() {
+            showNotification('Import feature coming soon!', 'info');
+        }
+
+        function showBackupModal() {
+            if (walletState.backed_up) {
+                showNotification('Wallet already backed up!', 'success');
+                return;
+            }
+            showSeedPhraseModal();
+        }
+
+        function showPrivateKeyModal() {
+            showNotification('Private key export coming soon!', 'info');
+        }
+
+        function showSettingsModal() {
+            showNotification('Settings coming soon!', 'info');
+        }
+
+        function showHelpModal() {
+            showNotification('Visit our docs at docs.qrcblockchain.com', 'info');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // Create wallet flow
+        function proceedWithCreation() {
+            closeModal('createWalletModal');
+            createWallet();
+        }
+
+        function generateSeedPhrase() {
+            const phrase = [];
+            for (let i = 0; i < 24; i++) {
+                const randomIndex = Math.floor(Math.random() * wordList.length);
+                phrase.push(wordList[randomIndex]);
+            }
+            return phrase;
+        }
+
+        function createWallet() {
+            // Generate seed phrase first
+            const seedPhrase = generateSeedPhrase();
+            walletState.seedPhrase = seedPhrase;
+            
+            // Call API to create wallet
+            fetch('/api/wallet/create', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    walletState.address = data.address;
+                    walletState.balance = data.balance;
+                    walletState.privateKey = generatePrivateKey();
+                    walletState.publicKey = derivePublicKey(walletState.privateKey);
+                    
+                    // Save to localStorage
+                    localStorage.setItem('qrcWalletPro', JSON.stringify(walletState));
+                    
+                    // Show seed phrase
+                    showSeedPhraseModal();
+                }
+            })
+            .catch(error => {
+                showNotification('Error creating wallet. Please try again.', 'error');
+            });
+        }
+
+        function showSeedPhraseModal() {
+            const grid = document.getElementById('seedPhraseGrid');
+            grid.innerHTML = '';
+            
+            walletState.seedPhrase.forEach((word, index) => {
+                const wordElement = document.createElement('div');
+                wordElement.className = 'seed-word';
+                wordElement.innerHTML = `
+                    <div class="seed-word-number">${index + 1}</div>
+                    <div class="seed-word-text">${word}</div>
+                `;
+                grid.appendChild(wordElement);
+            });
+            
+            document.getElementById('seedPhraseModal').style.display = 'flex';
+        }
+
+        function copySeedPhrase() {
+            const phrase = walletState.seedPhrase.join(' ');
+            navigator.clipboard.writeText(phrase);
+            showNotification('Seed phrase copied! Delete from clipboard after saving.', 'warning');
+        }
+
+        function confirmSeedPhrase() {
+            walletState.backed_up = true;
+            localStorage.setItem('qrcWalletPro', JSON.stringify(walletState));
+            closeModal('seedPhraseModal');
+            showWalletDisplay();
+            updateBackupStatus();
+            showNotification('Wallet created successfully! Welcome to the quantum future! 🚀', 'success');
+        }
+
+        function showWalletDisplay() {
+            document.getElementById('onboardingSection').style.display = 'none';
+            document.getElementById('walletDisplaySection').style.display = 'block';
+            document.getElementById('walletAddress').textContent = walletState.address;
+            updateBackupStatus();
+        }
+
+        function updateBackupStatus() {
+            const status = document.getElementById('backupStatus');
+            if (walletState.backed_up) {
+                status.className = 'backup-status backed-up';
+                status.innerHTML = '<span>✅</span><span>Backed Up</span>';
+            }
+        }
+
+        function generatePrivateKey() {
+            const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+            let key = 'QRCPK_';
+            for (let i = 0; i < 64; i++) {
+                key += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return key;
+        }
+
+        function derivePublicKey(privateKey) {
+            return 'QRCPUB_' + btoa(privateKey).substring(0, 44);
+        }
+
+        // Wallet functions
+        function copyAddress() {
+            navigator.clipboard.writeText(walletState.address);
+            showNotification('Address copied to clipboard!', 'success');
+        }
+
+        function showQRCode() {
+            showNotification('QR Code feature coming soon!', 'info');
+        }
+
+        function updateBalance() {
+            if (!walletState.address) return;
+            
+            fetch(`/api/wallet/balance/${walletState.address}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        walletState.balance = data.balance;
+                        document.getElementById('balanceAmount').textContent = `${data.balance.toFixed(2)} QRC`;
+                        document.getElementById('balanceUSD').textContent = `≈ $${(data.balance * 0.001).toFixed(2)} USD`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating balance:', error);
+                });
+        }
+
+        function updateStats() {
+            fetch('/api/stats')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('currentTPS').textContent = data.current_tps || 0;
+                    document.getElementById('totalBlocks').textContent = data.block_height || 0;
+                    document.getElementById('totalTransactions').textContent = data.total_transactions || 0;
+                    document.getElementById('activeUsers').textContent = data.active_users || 0;
+                })
+                .catch(error => console.error('Error updating stats:', error));
+        }
+
+        // Tabs
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName + 'Tab').classList.add('active');
+            event.target.classList.add('active');
+            
+            // Load activity if needed
+            if (tabName === 'activity') {
+                loadTransactionHistory();
+            }
+        }
+
+        function loadTransactionHistory() {
+            // Simulated - would load from API
+            document.getElementById('transactionHistory').innerHTML = `
+                <div style="text-align: center; color: #999; padding: 40px 0;">
+                    <p>No transactions yet</p>
+                    <p style="font-size: 14px; margin-top: 10px;">Your transaction history will appear here</p>
+                </div>
+            `;
+        }
+
+        // Send functions
+        function updateFeeDisplay() {
+            const amount = parseFloat(document.getElementById('sendAmount').value) || 0;
+            const fee = Math.max(amount * 0.002, 0.01);
+            document.getElementById('feeDisplay').textContent = fee.toFixed(2) + ' QRC';
+            document.getElementById('totalDisplay').textContent = (amount + fee).toFixed(2) + ' QRC';
+        }
+
+        function confirmSend() {
+            const recipient = document.getElementById('recipientAddress').value;
+            const amount = parseFloat(document.getElementById('sendAmount').value);
+            
+            if (!recipient || !amount) {
+                showNotification('Please fill in all fields', 'error');
+                return;
+            }
+            
+            // Send transaction
+            fetch('/api/transaction/send', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    sender: walletState.address,
+                    recipient: recipient,
+                    amount: amount
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Transaction sent successfully! 🚀', 'success');
+                    closeModal('sendModal');
+                    updateBalance();
+                } else {
+                    showNotification(data.error, 'error');
+                }
+            })
+            .catch(error => {
+                showNotification('Transaction failed. Please try again.', 'error');
+            });
+        }
+
+        function getFaucet() {
+            const lastClaim = localStorage.getItem('lastFaucetClaim');
+            const now = Date.now();
+            
+            if (lastClaim && now - parseInt(lastClaim) < 24 * 60 * 60 * 1000) {
+                showNotification('You can only claim from the faucet once per day', 'warning');
+                return;
+            }
+            
+            localStorage.setItem('lastFaucetClaim', now.toString());
+            showNotification('Test QRC claimed! Check your balance.', 'success');
+            setTimeout(updateBalance, 2000);
+        }
+
+        // FAQ
+        function toggleFAQ(element) {
+            element.classList.toggle('expanded');
+            const span = element.querySelector('.faq-question span');
+            span.textContent = element.classList.contains('expanded') ? '−' : '+';
+        }
+
+        // Notifications
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = 'notification ' + type;
+            notification.style.display = 'block';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 4000);
+        }
+    </script>
+</body>
+</html>

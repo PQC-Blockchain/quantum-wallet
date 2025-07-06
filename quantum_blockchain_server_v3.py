@@ -1,4 +1,4 @@
-# quantum_blockchain_server_v3.py - Server with liquidity fund tracking
+# quantum_blockchain_server_v5_fixed.py - Server with improved wallet addresses (fixed)
 
 from flask import Flask, jsonify, request, send_file
 import json
@@ -6,16 +6,20 @@ import time
 from datetime import datetime
 import threading
 from quantum_blockchain_fast_fixed import FastQuantumBlockchain
+import random
+import hashlib
+import secrets
 import os
+import uuid
 
 app = Flask(__name__)
 
-# Global blockchain instance
+# Initialize blockchain
 blockchain = FastQuantumBlockchain()
 
-# REVENUE SYSTEM CONSTANTS
-TRANSACTION_FEE_PERCENT = 0.002  # 0.2% fee (increased for faster liquidity)
-FOUNDER_WALLET = "Q1000000001"  # Your special founder wallet
+# Constants
+TRANSACTION_FEE_PERCENT = 0.002  # 0.2% fee
+FOUNDER_WALLET = "QRC7K9mN3pX2vB8nQ4jL6wR5tY1aZ9fH3kE-A7F2"  # Updated founder wallet
 PREMIUM_USERS = {}  # Track premium users
 
 # Revenue tracking
@@ -29,21 +33,63 @@ revenue_stats = {
 # Liquidity fund tracking
 liquidity_fund = {
     'qrc_accumulated': 0,
-    'target_usdt': 500,  # Target $500 for initial liquidity
-    'days_elapsed': 0,
-    'estimated_days_to_target': 30
+    'target_usdt': 1000000,  # Target $1M for massive launch
+    'days_elapsed': 0
 }
 
-# Stats tracking
-stats = {
-    'total_users': 0,
-    'daily_transactions': 0,
-    'peak_tps': 0
-}
+# Payment tracking
+payments = {}
+
+def generate_quantum_address():
+    """Generate a professional quantum-resistant wallet address"""
+    # Generate random bytes
+    random_bytes = secrets.token_bytes(32)
+    timestamp = str(time.time()).encode()
+    
+    # Create hash
+    combined = random_bytes + timestamp
+    hash_1 = hashlib.sha256(combined).digest()
+    hash_2 = hashlib.sha256(hash_1).digest()
+    
+    # Convert to base58-like format (excluding confusing characters)
+    alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+    address_num = int.from_bytes(hash_2[:20], 'big')
+    
+    address = ""
+    while address_num > 0:
+        address = alphabet[address_num % 58] + address
+        address_num //= 58
+    
+    # Add QRC prefix and ensure minimum length
+    address = "QRC" + address.ljust(32, '1')
+    
+    # Add checksum
+    checksum = hashlib.sha256(address.encode()).hexdigest()[:4].upper()
+    
+    return f"{address[:35]}-{checksum}"
+
+# Start auto-mining in background
+def auto_mine():
+    """Automatically mine blocks when transactions are pending"""
+    while True:
+        if blockchain.mempool:
+            blockchain.mine_pending_transactions()
+        time.sleep(10)  # Check every 10 seconds
+
+mining_thread = threading.Thread(target=auto_mine, daemon=True)
+mining_thread.start()
+
+print(f"""
+🚀 QUANTUM BLOCKCHAIN SERVER V5
+⚡ Starting with proven 1,773 TPS performance!
+💰 0.2% fees accumulating to ${liquidity_fund['target_usdt']:,} liquidity fund
+🔐 Professional wallet addresses (QRC format)
+🌐 Web interface at: http://localhost:5000
+""")
 
 @app.route('/')
 def index():
-    """Serve the web wallet"""
+    """Serve the main wallet interface"""
     return send_file('quantum_web_wallet.html')
 
 @app.route('/explorer')
@@ -59,46 +105,124 @@ def revenue_dashboard():
 @app.route('/api/stats')
 def get_stats():
     """Get blockchain statistics"""
-    blockchain_stats = blockchain.get_stats()
+    stats = blockchain.get_stats()
+    stats['active_users'] = len(blockchain.get_active_addresses())
+    stats['founder_wallet'] = FOUNDER_WALLET
+    stats['liquidity_fund'] = liquidity_fund
+    return jsonify(stats)
+
+@app.route('/api/wallet/create', methods=['POST'])
+def create_wallet():
+    """Create a new quantum-resistant wallet with improved address format"""
+    wallet_address = generate_quantum_address()
     
-    # Update peak TPS
-    current_tps = blockchain_stats['tps']
-    if current_tps > stats['peak_tps']:
-        stats['peak_tps'] = current_tps
+    # Give new wallets some starter QRC from faucet
+    faucet_amount = 1000
+    faucet_tx = {
+        'sender': 'FAUCET',
+        'recipient': wallet_address,
+        'amount': faucet_amount,
+        'timestamp': datetime.now().isoformat(),
+        'quantum_signature': f'faucet_sig_{time.time()}',
+        'type': 'faucet'
+    }
+    blockchain.add_transaction(faucet_tx)
     
     return jsonify({
         'success': True,
-        'data': {
-            'blockchain': {
-                'height': blockchain_stats['chain_height'],
-                'transactions': blockchain_stats['total_transactions'],
-                'tps': round(blockchain_stats['tps'], 2),
-                'peak_tps': round(stats['peak_tps'], 2),
-                'pending': blockchain_stats['pending_transactions']
-            },
-            'network': {
-                'users': blockchain_stats['unique_addresses'],
-                'total_value': blockchain_stats['total_value_locked'],
-                'daily_tx': stats['daily_transactions']
-            }
+        'address': wallet_address,
+        'balance': faucet_amount,
+        'message': f'Wallet created! You received {faucet_amount} QRC from the faucet.'
+    })
+
+@app.route('/api/wallet/balance/<address>')
+def get_balance(address):
+    """Get wallet balance"""
+    balance = blockchain.get_balance(address)
+    return jsonify({
+        'success': True,
+        'address': address,
+        'balance': balance
+    })
+
+@app.route('/api/transaction/send', methods=['POST'])
+def send_transaction():
+    """Send a quantum-resistant transaction"""
+    data = request.json
+    sender = data.get('sender')
+    recipient = data.get('recipient')
+    amount = float(data.get('amount', 0))
+    
+    # Validate
+    if amount <= 0:
+        return jsonify({'success': False, 'error': 'Invalid amount'}), 400
+    
+    sender_balance = blockchain.get_balance(sender)
+    
+    # Calculate fee
+    fee = amount * TRANSACTION_FEE_PERCENT
+    if fee < 0.01:  # Minimum fee
+        fee = 0.01
+    
+    total_needed = amount + fee
+    
+    if sender_balance < total_needed:
+        return jsonify({
+            'success': False,
+            'error': f'Insufficient balance. Need {total_needed} QRC (including {fee} QRC fee)'
+        }), 400
+    
+    # Create main transaction
+    tx = {
+        'sender': sender,
+        'recipient': recipient,
+        'amount': amount,
+        'timestamp': datetime.now().isoformat(),
+        'quantum_signature': f'sig_{hashlib.sha256(f"{sender}{recipient}{amount}{time.time()}".encode()).hexdigest()}'
+    }
+    
+    blockchain.add_transaction(tx)
+    
+    # Add fee transaction
+    if fee > 0:
+        fee_tx = {
+            'sender': sender,
+            'recipient': FOUNDER_WALLET,
+            'amount': fee,
+            'timestamp': datetime.now().isoformat(),
+            'quantum_signature': f'fee_sig_{time.time()}',
+            'type': 'fee'
         }
+        blockchain.add_transaction(fee_tx)
+        revenue_stats['total_fees_collected'] += fee
+        revenue_stats['daily_fees'] += fee
+        liquidity_fund['qrc_accumulated'] += fee  # Track for liquidity
+    
+    return jsonify({
+        'success': True,
+        'transaction_id': tx['quantum_signature'],
+        'fee': fee,
+        'message': f'Transaction sent! Fee: {fee} QRC ({TRANSACTION_FEE_PERCENT*100}%)'
+    })
+
+@app.route('/api/transactions/recent')
+def recent_transactions():
+    """Get recent transactions"""
+    all_transactions = []
+    for block in blockchain.chain[-10:]:  # Last 10 blocks
+        if hasattr(block, 'transactions'):
+            all_transactions.extend(block.transactions)
+    
+    return jsonify({
+        'success': True,
+        'transactions': all_transactions[-50:]  # Last 50 transactions
     })
 
 @app.route('/api/revenue/stats')
 def get_revenue_stats():
-    """Get revenue statistics with liquidity fund info"""
+    """Get revenue statistics"""
     # Calculate QRC to USD (example rate)
     qrc_price = 0.001  # $0.001 per QRC initially
-    
-    # Calculate liquidity fund progress
-    current_value = liquidity_fund['qrc_accumulated'] * qrc_price
-    progress_percent = (current_value / liquidity_fund['target_usdt']) * 100
-    
-    # Estimate days to reach target based on current rate
-    if revenue_stats['daily_fees'] > 0:
-        days_needed = (liquidity_fund['target_usdt'] - current_value) / (revenue_stats['daily_fees'] * qrc_price)
-    else:
-        days_needed = 30
     
     return jsonify({
         'success': True,
@@ -111,262 +235,72 @@ def get_revenue_stats():
             'monthly_recurring': revenue_stats['total_premium_users'] * 9.99,
             'api_calls_today': revenue_stats['api_calls_today']
         },
-        'liquidity_fund': {
-            'qrc_accumulated': liquidity_fund['qrc_accumulated'],
-            'current_value_usd': current_value,
-            'target_usd': liquidity_fund['target_usdt'],
-            'progress_percent': round(progress_percent, 2),
-            'estimated_days_to_target': round(days_needed, 1)
-        },
         'projections': {
             'monthly_fees': revenue_stats['daily_fees'] * 30,
             'monthly_usd': revenue_stats['daily_fees'] * 30 * qrc_price,
             'yearly_usd': revenue_stats['daily_fees'] * 365 * qrc_price
+        },
+        'liquidity_fund': {
+            'qrc_accumulated': liquidity_fund['qrc_accumulated'],
+            'current_value_usd': liquidity_fund['qrc_accumulated'] * qrc_price,
+            'target_usd': liquidity_fund['target_usdt'],
+            'progress_percent': (liquidity_fund['qrc_accumulated'] * qrc_price / liquidity_fund['target_usdt']) * 100,
+            'estimated_days_to_target': max(1, int((liquidity_fund['target_usdt'] - liquidity_fund['qrc_accumulated'] * qrc_price) / (revenue_stats['daily_fees'] * qrc_price))) if revenue_stats['daily_fees'] > 0 else 999999
         }
     })
 
-@app.route('/api/wallet/create', methods=['POST'])
-def create_wallet():
-    """Create a new quantum wallet"""
-    try:
-        # Generate wallet address (simplified for demo)
-        wallet_id = f"Q{int(time.time() * 1000000) % 1000000000}"
-        
-        stats['total_users'] += 1
-        
-        return jsonify({
-            'success': True,
-            'wallet': {
-                'address': wallet_id,
-                'balance': 0,
-                'quantum_safe': True
-            }
-        })
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-@app.route('/api/wallet/balance/<address>')
-def get_balance(address):
-    """Get wallet balance"""
-    balance = blockchain.balances.get(address, 0)
-    
-    return jsonify({
-        'success': True,
-        'balance': balance,
-        'address': address
-    })
-
-@app.route('/api/faucet', methods=['POST'])
-def faucet():
-    """Give free tokens to new users"""
-    try:
-        data = request.json
-        address = data.get('address')
-        
-        if not address:
-            return jsonify({'success': False, 'error': 'Address required'})
-        
-        # Check if already received from faucet
-        if blockchain.balances.get(address, 0) > 0:
-            return jsonify({'success': False, 'error': 'Already received tokens'})
-        
-        # Create faucet transaction
-        tx = {
-            'sender': 'GENESIS',
-            'recipient': address,
-            'amount': 1000,
-            'timestamp': datetime.now().isoformat(),
-            'quantum_signature': 'faucet_sig'
-        }
-        
-        blockchain.add_transaction(tx)
-        
-        return jsonify({
-            'success': True,
-            'message': 'Received 1000 QRC!',
-            'amount': 1000
-        })
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-@app.route('/api/transaction', methods=['POST'])
-def send_transaction():
-    """Send a quantum-safe transaction WITH FEES"""
-    try:
-        data = request.json
-        
-        sender = data['sender']
-        recipient = data['recipient']
-        amount = float(data['amount'])
-        
-        # Calculate fee (0.2% now)
-        fee = amount * TRANSACTION_FEE_PERCENT
-        if fee < 0.01:  # Minimum fee
-            fee = 0.01
-            
-        # Check if premium user (no fees)
-        if sender in PREMIUM_USERS:
-            fee = 0
-            
-        total_deduction = amount + fee
-        
-        # Validate balance including fee
-        sender_balance = blockchain.balances.get(sender, 0)
-        if sender_balance < total_deduction:
-            return jsonify({
-                'success': False, 
-                'error': f'Insufficient balance. Need {total_deduction} QRC (including {fee} QRC fee)'
-            })
-        
-        # Create main transaction
-        main_tx = {
-            'sender': sender,
-            'recipient': recipient,
-            'amount': amount,
-            'timestamp': datetime.now().isoformat(),
-            'quantum_signature': data.get('signature', f'sig_{time.time()}')
-        }
-        
-        # Create fee transaction (if applicable)
-        if fee > 0:
-            fee_tx = {
-                'sender': sender,
-                'recipient': FOUNDER_WALLET,
-                'amount': fee,
-                'timestamp': datetime.now().isoformat(),
-                'quantum_signature': f'fee_sig_{time.time()}',
-                'type': 'fee'
-            }
-            blockchain.add_transaction(fee_tx)
-            revenue_stats['total_fees_collected'] += fee
-            revenue_stats['daily_fees'] += fee
-            liquidity_fund['qrc_accumulated'] += fee  # Track for liquidity
-        
-        blockchain.add_transaction(main_tx)
-        stats['daily_transactions'] += 1
-        
-        return jsonify({
-            'success': True,
-            'message': f'Transaction sent! Fee: {fee} QRC (0.2%)',
-            'tx_hash': f"QTX{int(time.time() * 1000000) % 1000000000}",
-            'fee_charged': fee
-        })
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-@app.route('/api/premium/upgrade', methods=['POST'])
-def upgrade_to_premium():
-    """Upgrade wallet to premium tier"""
+# Payment API Routes
+@app.route('/api/payment/create', methods=['POST'])
+def create_payment():
+    """Create a payment request for merchants"""
     data = request.json
-    wallet = data.get('wallet')
     
-    # Add to premium list
-    PREMIUM_USERS[wallet] = {
-        'upgraded_at': datetime.now().isoformat(),
-        'tier': 'premium',
-        'expires': None
+    payment_id = str(uuid.uuid4())
+    payments[payment_id] = {
+        'id': payment_id,
+        'merchant_wallet': data.get('merchant_wallet'),
+        'amount': float(data.get('amount', 0)),
+        'description': data.get('description', ''),
+        'status': 'pending',
+        'created_at': datetime.now().isoformat()
     }
     
-    revenue_stats['total_premium_users'] += 1
-    
     return jsonify({
         'success': True,
-        'message': 'Upgraded to Premium! No transaction fees.',
-        'benefits': [
-            'No transaction fees',
-            'Priority processing',
-            'Unlimited transactions',
-            'Advanced analytics'
-        ]
+        'payment_id': payment_id,
+        'payment_url': f'/pay/{payment_id}',
+        'amount': payments[payment_id]['amount']
     })
 
-@app.route('/api/blocks/latest')
-def get_latest_blocks():
-    """Get latest blocks"""
-    latest_blocks = blockchain.chain[-10:]  # Last 10 blocks
+@app.route('/api/payment/verify/<payment_id>')
+def verify_payment(payment_id):
+    """Verify payment status"""
+    if payment_id not in payments:
+        return jsonify({'success': False, 'error': 'Payment not found'}), 404
     
-    blocks_data = []
-    for block in latest_blocks:
-        blocks_data.append({
-            'index': block['index'],
-            'timestamp': block['timestamp'],
-            'transactions': len(block['transactions']),
-            'hash': block['hash'][:16] + '...'
-        })
-    
+    payment = payments[payment_id]
     return jsonify({
         'success': True,
-        'blocks': blocks_data
+        'payment': payment
     })
 
-@app.route('/api/transactions/recent')
-def get_recent_transactions():
-    """Get recent transactions"""
-    recent_txs = []
-    
-    # Get transactions from last few blocks
-    for block in blockchain.chain[-5:]:
-        for tx in block['transactions'][:5]:  # Max 5 per block
-            recent_txs.append({
-                'sender': tx['sender'][:10] + '...' if len(tx['sender']) > 10 else tx['sender'],
-                'recipient': tx['recipient'][:10] + '...',
-                'amount': tx['amount'],
-                'time': tx['timestamp']
-            })
-    
-    return jsonify({
-        'success': True,
-        'transactions': recent_txs[-20:]  # Last 20 transactions
-    })
-
-def auto_mine_thread():
-    """Background thread for auto-mining"""
-    while True:
-        if len(blockchain.pending_transactions) > 0:
-            blockchain.mine_pending_transactions()
-        time.sleep(1)
-
-def initialize_founder_wallet():
-    """Give founder wallet initial QRC"""
-    if FOUNDER_WALLET not in blockchain.balances:
-        # Genesis allocation to founder
-        genesis_tx = {
-            'sender': 'GENESIS',
-            'recipient': FOUNDER_WALLET,
-            'amount': 10000000,  # 10M QRC founder allocation
-            'timestamp': datetime.now().isoformat(),
-            'quantum_signature': 'founder_genesis',
-            'type': 'founder_allocation'
-        }
-        blockchain.add_transaction(genesis_tx)
-        blockchain.mine_pending_transactions()
-        print(f"✅ Founder wallet initialized with 10M QRC")
-        print(f"💰 At $0.001/QRC = $10,000 initial value")
-        print(f"🚀 At $0.01/QRC = $100,000 potential")
-        print(f"🌙 At $0.10/QRC = $1,000,000 moon!")
+@app.route('/api/docs')
+def api_documentation():
+    """Simple API documentation"""
+    docs = """
+    <h1>QRC Blockchain API Documentation</h1>
+    <h2>Endpoints:</h2>
+    <ul>
+        <li>POST /api/wallet/create - Create new wallet</li>
+        <li>GET /api/wallet/balance/[address] - Get balance</li>
+        <li>POST /api/transaction/send - Send transaction</li>
+        <li>GET /api/stats - Blockchain statistics</li>
+        <li>POST /api/payment/create - Create payment request</li>
+    </ul>
+    <p>Visit GitHub for full documentation.</p>
+    """
+    return docs
 
 if __name__ == '__main__':
-    print("🚀 QUANTUM BLOCKCHAIN SERVER V3 - LIQUIDITY FUND EDITION")
-    print("=" * 60)
-    print("⚡ 1,773 TPS proven performance")
-    print("🔐 Quantum-resistant signatures")
-    print("💰 Transaction fees: 0.2% (increased for liquidity fund)")
-    print("🏦 Liquidity target: $500 USDT")
-    print("👑 Founder wallet: " + FOUNDER_WALLET)
-    print("=" * 60)
-    print("📊 Dashboards:")
-    print("   Wallet: http://localhost:5000")
-    print("   Explorer: http://localhost:5000/explorer")
-    print("   Revenue: http://localhost:5000/revenue")
-    print("=" * 60)
-    
-    # Initialize founder wallet
-    initialize_founder_wallet()
-    
-    # Start mining thread
-    mining_thread = threading.Thread(target=auto_mine_thread, daemon=True)
-    mining_thread.start()
-    
-    # Run server
     port = int(os.environ.get('PORT', 5000))
-app.run(debug=False, host='0.0.0.0', port=port)
+    app.run(debug=False, host='0.0.0.0', port=port)

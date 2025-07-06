@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Wallet Creation</title>
+</head>
+<body>
+    <h1>Test Wallet Creation</h1>
+    <button onclick="testCreate()">Create Wallet</button>
+    <div id="result"></div>
+    
+    <script>
+        function testCreate() {
+            fetch('/api/wallet/create', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('result').innerHTML = JSON.stringify(data, null, 2);
+            })
+            .catch(error => {
+                document.getElementById('result').innerHTML = 'Error: ' + error;
+            });
+        }
+    </script>
+</body>
+</html>

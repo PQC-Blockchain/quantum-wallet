@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Blockchain Wallet</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeIn 1s ease-out;
+        }
+        
+        .logo {
+            width: 60px;
+            height: 60px;
+            background: #00ff88;
+            border-radius: 12px;
+            display: inline-block;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+        
+        h1 {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #00ff88, #00ffff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .tagline {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .tag {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 1000px;
+            margin-bottom: 40px;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s ease, background 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.08);
+        }
+        
+        .stat-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: #00ff88;
+            margin-bottom: 10px;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #999;
+        }
+        
+        .wallet-container {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 40px;
+            border-radius: 24px;
+            width: 100%;
+            max-width: 500px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .wallet-address {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            word-break: break-all;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            text-align: center;
+        }
+        
+        .wallet-address:hover {
+            background: rgba(0, 0, 0, 0.5);
+        }
+        
+        .balance {
+            font-size: 48px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 30px;
+            background: linear-gradient(45deg, #00ff88, #00ffff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .button {
+            width: 100%;
+            padding: 18px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+        }
+        
+        .button-primary {
+            background: linear-gradient(45deg, #00ff88, #00cc77);
+            color: #000;
+        }
+        
+        .button-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 255, 136, 0.3);
+        }
+        
+        .button-secondary {
+            background: transparent;
+            color: #00ff88;
+            border: 2px solid #00ff88;
+        }
+        
+        .button-secondary:hover {
+            background: #00ff88;
+            color: #000;
+        }
+        
+        .button-create {
+            background: linear-gradient(45deg, #ff6b6b, #ff5252);
+            color: #fff;
+            margin-bottom: 30px;
+        }
+        
+        .button-create:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255, 107, 107, 0.3);
+        }
+        
+        .activity-feed {
+            margin-top: 40px;
+            max-width: 1000px;
+            width: 100%;
+        }
+        
+        .activity-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: slideIn 0.5s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: -1;
+        }
+        
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #00ff88;
+            border-radius: 50%;
+            opacity: 0.3;
+            animation: float 20s infinite linear;
+        }
+        
+        @keyframes float {
+            from {
+                transform: translateY(100vh) translateX(0);
+            }
+            to {
+                transform: translateY(-100px) translateX(100px);
+            }
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: #1a1a3e;
+            padding: 40px;
+            border-radius: 20px;
+            max-width: 400px;
+            width: 90%;
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #999;
+            font-size: 14px;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: #00ff88;
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: #999;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #00ff88;
+            color: #000;
+            padding: 20px 30px;
+            border-radius: 12px;
+            font-weight: 600;
+            animation: slideIn 0.5s ease-out;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+    
+    <div class="header">
+        <div class="logo"></div>
+        <h1>Quantum Blockchain</h1>
+        <div class="tagline">
+            <span class="tag">⚡ 1,773 TPS PROVEN</span>
+            <span class="tag">🔐 QUANTUM-SAFE</span>
+        </div>
+    </div>
+    
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value" id="currentTPS">0</div>
+            <div class="stat-label">Current TPS</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="totalBlocks">0</div>
+            <div class="stat-label">Total Blocks</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="totalTransactions">0</div>
+            <div class="stat-label">Transactions</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="activeUsers">0</div>
+            <div class="stat-label">Active Users</div>
+        </div>
+    </div>
+    
+    <div class="wallet-container">
+        <h2>Your Quantum Wallet</h2>
+        
+        <div id="createWalletSection">
+            <button class="button button-create" onclick="createWallet()">Create Quantum Wallet</button>
+        </div>
+        
+        <div id="walletSection" style="display: none;">
+            <div class="wallet-address" id="walletAddress" onclick="copyAddress()"></div>
+            <div class="balance" id="balance">Loading...</div>
+            
+            <button class="button button-primary" onclick="showSendModal()">Send QRC</button>
+            <button class="button button-secondary" onclick="getFaucet()">Get Free Test QRC</button>
+        </div>
+    </div>
+    
+    <div class="activity-feed">
+        <h3>Recent Network Activity</h3>
+        <div id="activityFeed"></div>
+    </div>
+    
+    <!-- Send Modal -->
+    <div class="modal" id="sendModal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeSendModal()">×</button>
+            <h3>Send QRC</h3>
+            <div class="input-group">
+                <label>Recipient Address</label>
+                <input type="text" id="recipientAddress" placeholder="QRC...">
+            </div>
+            <div class="input-group">
+                <label>Amount</label>
+                <input type="number" id="sendAmount" placeholder="0.00">
+            </div>
+            <button class="button button-primary" onclick="sendTransaction()">Send Transaction</button>
+        </div>
+    </div>
+    
+    <div class="notification" id="notification"></div>
+    
+    <script>
+        // Initialize particles
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 20 + 's';
+                particle.style.animationDuration = (20 + Math.random() * 10) + 's';
+                particlesContainer.appendChild(particle);
+            }
+        }
+        createParticles();
+        
+        let currentWallet = localStorage.getItem('qrcWallet');
+        
+        if (currentWallet) {
+            showWallet();
+            updateBalance();
+        }
+        
+        function createWallet() {
+            fetch('/api/wallet/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    currentWallet = data.address;
+                    localStorage.setItem('qrcWallet', currentWallet);
+                    showNotification(data.message);
+                    showWallet();
+                    updateBalance();
+                }
+            })
+            .catch(error => {
+                showNotification('Error creating wallet', 'error');
+            });
+        }
+        
+        function showWallet() {
+            document.getElementById('createWalletSection').style.display = 'none';
+            document.getElementById('walletSection').style.display = 'block';
+            document.getElementById('walletAddress').textContent = currentWallet;
+        }
+        
+        function updateBalance() {
+            if (!currentWallet) return;
+            
+            fetch(`/api/wallet/balance/${currentWallet}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('balance').textContent = `${data.balance.toFixed(2)} QRC`;
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('balance').textContent = 'Error';
+                });
+        }
+        
+        function updateStats() {
+            fetch('/api/stats')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('currentTPS').textContent = data.current_tps || 0;
+                    document.getElementById('totalBlocks').textContent = data.block_height || 0;
+                    document.getElementById('totalTransactions').textContent = data.total_transactions || 0;
+                    document.getElementById('activeUsers').textContent = data.active_users || 0;
+                })
+                .catch(error => console.error('Error updating stats:', error));
+        }
+        
+        function copyAddress() {
+            navigator.clipboard.writeText(currentWallet);
+            showNotification('Address copied to clipboard!');
+        }
+        
+        function showSendModal() {
+            document.getElementById('sendModal').style.display = 'flex';
+        }
+        
+        function closeSendModal() {
+            document.getElementById('sendModal').style.display = 'none';
+        }
+        
+        function sendTransaction() {
+            const recipient = document.getElementById('recipientAddress').value;
+            const amount = parseFloat(document.getElementById('sendAmount').value);
+            
+            if (!recipient || !amount) {
+                showNotification('Please fill all fields', 'error');
+                return;
+            }
+            
+            fetch('/api/transaction/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    sender: currentWallet,
+                    recipient: recipient,
+                    amount: amount
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification(data.message);
+                    closeSendModal();
+                    updateBalance();
+                    updateRecentActivity();
+                } else {
+                    showNotification(data.error, 'error');
+                }
+            })
+            .catch(error => {
+                showNotification('Transaction failed', 'error');
+            });
+        }
+        
+        function getFaucet() {
+            showNotification('You already received faucet tokens!');
+        }
+        
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.style.background = type === 'error' ? '#ff6b6b' : '#00ff88';
+            notification.style.display = 'block';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+        
+        function updateRecentActivity() {
+            fetch('/api/transactions/recent')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.transactions) {
+                        const feed = document.getElementById('activityFeed');
+                        feed.innerHTML = '';
+                        
+                        data.transactions.slice(0, 5).forEach(tx => {
+                            const item = document.createElement('div');
+                            item.className = 'activity-item';
+                            
+                            const senderShort = tx.sender.substring(0, 8) + '...';
+                            const recipientShort = tx.recipient.substring(0, 8) + '...';
+                            
+                            item.innerHTML = `
+                                <div>
+                                    <strong>${senderShort}</strong> → <strong>${recipientShort}</strong>
+                                </div>
+                                <div style="color: #00ff88;">
+                                    ${tx.amount} QRC
+                                </div>
+                            `;
+                            feed.appendChild(item);
+                        });
+                    }
+                })
+                .catch(error => console.error('Error updating activity:', error));
+        }
+        
+        // Update stats every 5 seconds
+        setInterval(updateStats, 5000);
+        setInterval(updateBalance, 5000);
+        setInterval(updateRecentActivity, 5000);
+        
+        // Initial updates
+        updateStats();
+        updateRecentActivity();
+    </script>
+</body>
+</html>

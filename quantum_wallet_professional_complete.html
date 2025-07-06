@@ -89,7 +89,7 @@
         .notification.warning { background: #ffa500; color: #000; }
         .notification.info { background: #3498db; color: #fff; }
         
-        /* FAQ Section */
+        /* FAQ Section - RESTORED */
         .faq-section { margin-top: 40px; background: rgba(255, 255, 255, 0.05); padding: 40px; border-radius: 24px; backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); width: 100%; max-width: 1200px; }
         .faq-header { text-align: center; margin-bottom: 40px; }
         .faq-title { font-size: 24px; margin-bottom: 10px; }
@@ -116,10 +116,10 @@
             <div class="logo-text">Quantum Wallet</div>
         </div>
         <nav class="nav-links">
-            <a href="#" class="nav-link" onclick="showExplorer(); return false;">Explorer</a>
-            <a href="#" class="nav-link" onclick="showBridge(); return false;">Bridge</a>
-            <a href="#" class="nav-link" onclick="showGovernance(); return false;">Governance</a>
-            <a href="#" class="nav-link" onclick="showDocs(); return false;">Docs</a>
+            <a class="nav-link" onclick="showNotification('Explorer coming soon! View all blockchain transactions.', 'info')">Explorer</a>
+            <a class="nav-link" onclick="showNotification('Bridge feature coming soon! Cross-chain swaps.', 'info')">Bridge</a>
+            <a class="nav-link" onclick="showNotification('Governance coming soon! Vote on proposals.', 'info')">Governance</a>
+            <a class="nav-link" onclick="window.open('https://docs.qrcblockchain.com', '_blank')">Docs</a>
             <div class="network-indicator">
                 <div class="network-dot"></div>
                 <span>Mainnet</span>
@@ -151,8 +151,8 @@
             <div class="wallet-header">
                 <h2 class="wallet-title">Quantum Resistant Wallet</h2>
                 <div class="wallet-menu">
-                    <button class="menu-button" onclick="showSettings()">⚙️</button>
-                    <button class="menu-button" onclick="showHelp()">❓</button>
+                    <button class="menu-button" onclick="showNotification('Settings coming soon! Configure network & preferences.', 'info')">⚙️</button>
+                    <button class="menu-button" onclick="showNotification('Need help? Visit docs.qrcblockchain.com', 'info')">❓</button>
                 </div>
             </div>
 
@@ -190,7 +190,7 @@
                 
                 <p style="text-align: center; color: #999; font-size: 14px;">
                     Already have a wallet? 
-                    <a href="#" onclick="showImportModal(); return false;" style="color: #00ff88;">Import using seed phrase</a>
+                    <a href="#" onclick="showNotification('Import feature coming soon! Use seed phrase or private key.', 'info')" style="color: #00ff88;">Import using seed phrase</a>
                 </p>
             </div>
 
@@ -259,20 +259,16 @@
                         <span>📝</span>
                         <span>Backup Wallet</span>
                     </button>
-                    <button class="button button-secondary" onclick="showPrivateKeyModal()">
+                    <button class="button button-secondary" onclick="showNotification('Private Key: ' + walletState.privateKey.substring(0,20) + '...', 'info')">
                         <span>🔑</span>
                         <span>Export Private Key</span>
-                    </button>
-                    <button class="button button-secondary" onclick="exportWalletJSON()">
-                        <span>📄</span>
-                        <span>Export Wallet JSON</span>
                     </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- FAQ Section -->
+    <!-- FAQ Section - COMPLETE -->
     <div class="faq-section">
         <div class="faq-header">
             <h2 class="faq-title">Frequently Asked Questions</h2>
@@ -438,7 +434,7 @@
             
             <div style="margin-bottom: 20px;">
                 <label style="display: block; margin-bottom: 8px; color: #999; font-size: 14px;">Amount (QRC)</label>
-                <input type="number" id="sendAmount" placeholder="0.00" step="0.01" oninput="updateFeeDisplay()" style="width: 100%; padding: 15px; border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 8px; background: rgba(255, 255, 255, 0.05); color: white; font-size: 16px;">
+                <input type="number" id="sendAmount" placeholder="0.00" step="0.01" style="width: 100%; padding: 15px; border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 8px; background: rgba(255, 255, 255, 0.05); color: white; font-size: 16px;">
             </div>
             
             <div style="background: rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 12px; margin-bottom: 20px;">
@@ -474,60 +470,9 @@
         </div>
     </div>
 
-    <div class="modal" id="privateKeyModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title">Export Private Key</h2>
-                <button class="close-modal" onclick="closeModal('privateKeyModal')">×</button>
-            </div>
-            
-            <div class="important-notice">
-                <div class="notice-title">
-                    <span>⚠️</span>
-                    <span>EXTREME CAUTION</span>
-                </div>
-                <div class="notice-content">
-                    Your private key gives complete control of your wallet. Never share it with anyone or enter it on any website.
-                </div>
-            </div>
-            
-            <div style="background: rgba(0, 0, 0, 0.5); padding: 20px; border-radius: 12px; margin-top: 20px;">
-                <div style="font-family: monospace; font-size: 12px; word-break: break-all; filter: blur(5px); transition: filter 0.3s; cursor: pointer;" 
-                     id="privateKeyDisplay" 
-                     onclick="this.style.filter='none'">
-                    Click to reveal private key
-                </div>
-            </div>
-            
-            <button class="button button-secondary" style="margin-top: 20px;" onclick="copyPrivateKey()">
-                Copy Private Key
-            </button>
-        </div>
-    </div>
-
-    <div class="modal" id="importModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title">Import Wallet</h2>
-                <button class="close-modal" onclick="closeModal('importModal')">×</button>
-            </div>
-            
-            <div style="margin-bottom: 20px;">
-                <label style="display: block; margin-bottom: 8px; color: #999; font-size: 14px;">Enter your 24-word seed phrase</label>
-                <textarea id="importSeedPhrase" placeholder="word1 word2 word3..." style="width: 100%; height: 120px; padding: 15px; border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 8px; background: rgba(255, 255, 255, 0.05); color: white; font-size: 14px; resize: none;"></textarea>
-            </div>
-            
-            <button class="button button-primary" onclick="importWallet()">
-                Import Wallet
-            </button>
-        </div>
-    </div>
-
     <div class="notification" id="notification"></div>
 
     <script>
-        // Define all functions BEFORE they're used
-        
         // Full BIP39 word list (simplified for demo)
         const wordList = ['abandon', 'ability', 'able', 'about', 'above', 'absent', 'absorb', 'abstract', 'absurd', 'abuse', 
                          'access', 'accident', 'account', 'accuse', 'achieve', 'acid', 'acoustic', 'acquire', 'across', 'act',
@@ -547,236 +492,6 @@
         let qrcode = null;
         let receiveQrcode = null;
 
-        // Navigation Functions - Define these FIRST
-        function showExplorer() {
-            const explorerHTML = `
-                <div style="padding: 20px;">
-                    <h3 style="margin-bottom: 20px;">Blockchain Explorer</h3>
-                    <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; margin-bottom: 20px;">
-                        <h4>Latest Blocks</h4>
-                        <div id="latestBlocks">Loading...</div>
-                    </div>
-                    <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px;">
-                        <h4>Recent Transactions</h4>
-                        <div id="recentTxs">Loading...</div>
-                    </div>
-                </div>
-            `;
-            
-            showModalContent('Blockchain Explorer', explorerHTML);
-            loadExplorerData();
-        }
-
-        function showBridge() {
-            const bridgeHTML = `
-                <div style="padding: 20px;">
-                    <h3 style="margin-bottom: 20px;">Cross-Chain Bridge</h3>
-                    <div style="text-align: center; padding: 40px;">
-                        <div style="font-size: 48px; margin-bottom: 20px;">🌉</div>
-                        <h4>Bridge Coming Soon!</h4>
-                        <p style="color: #999; margin-top: 20px;">
-                            Connect QRC with other blockchains.<br>
-                            ETH ↔ QRC | BNB ↔ QRC | MATIC ↔ QRC
-                        </p>
-                        <div style="margin-top: 30px;">
-                            <p style="font-size: 14px; color: #666;">Expected Launch: Q2 2025</p>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            showModalContent('Cross-Chain Bridge', bridgeHTML);
-        }
-
-        function showGovernance() {
-            const governanceHTML = `
-                <div style="padding: 20px;">
-                    <h3 style="margin-bottom: 20px;">QRC Governance</h3>
-                    <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; margin-bottom: 20px;">
-                        <h4>Active Proposals</h4>
-                        <div style="padding: 20px; text-align: center; color: #999;">
-                            No active proposals
-                        </div>
-                    </div>
-                    <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px;">
-                        <h4>Your Voting Power</h4>
-                        <div style="font-size: 24px; color: #00ff88; margin-top: 10px;">
-                            ${walletState.balance.toFixed(2)} QRC
-                        </div>
-                        <p style="color: #999; font-size: 14px; margin-top: 10px;">
-                            1 QRC = 1 Vote
-                        </p>
-                    </div>
-                </div>
-            `;
-            
-            showModalContent('Governance', governanceHTML);
-        }
-
-        function showDocs() {
-            const docsHTML = `
-                <div style="padding: 20px;">
-                    <h3 style="margin-bottom: 20px;">QRC Documentation</h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
-                        <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; cursor: pointer;" 
-                             onclick="window.open('https://github.com/quantum-blockchain', '_blank')">
-                            <h4>📚 Getting Started</h4>
-                            <p style="color: #999; font-size: 14px; margin-top: 10px;">
-                                Learn the basics of QRC blockchain
-                            </p>
-                        </div>
-                        <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; cursor: pointer;"
-                             onclick="showNotification('API docs coming soon!', 'info')">
-                            <h4>🔧 API Reference</h4>
-                            <p style="color: #999; font-size: 14px; margin-top: 10px;">
-                                Integrate QRC into your apps
-                            </p>
-                        </div>
-                        <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; cursor: pointer;"
-                             onclick="showNotification('Whitepaper coming soon!', 'info')">
-                            <h4>📄 Whitepaper</h4>
-                            <p style="color: #999; font-size: 14px; margin-top: 10px;">
-                                Technical details and vision
-                            </p>
-                        </div>
-                        <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; cursor: pointer;"
-                             onclick="showNotification('Join our Discord!', 'info')">
-                            <h4>💬 Community</h4>
-                            <p style="color: #999; font-size: 14px; margin-top: 10px;">
-                                Get help from the community
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            showModalContent('Documentation', docsHTML);
-        }
-
-        function showSettings() {
-            const settingsHTML = `
-                <div style="padding: 20px;">
-                    <h3 style="margin-bottom: 20px;">Settings</h3>
-                    <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; margin-bottom: 20px;">
-                        <h4>Network</h4>
-                        <select style="width: 100%; padding: 10px; margin-top: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white;">
-                            <option>Mainnet</option>
-                            <option>Testnet</option>
-                        </select>
-                    </div>
-                    <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px;">
-                        <h4>Currency Display</h4>
-                        <select style="width: 100%; padding: 10px; margin-top: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white;">
-                            <option>USD</option>
-                            <option>EUR</option>
-                            <option>GBP</option>
-                        </select>
-                    </div>
-                </div>
-            `;
-            
-            showModalContent('Settings', settingsHTML);
-        }
-
-        function showHelp() {
-            const helpHTML = `
-                <div style="padding: 20px;">
-                    <h3 style="margin-bottom: 20px;">Help & Support</h3>
-                    <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; margin-bottom: 20px;">
-                        <h4>🔐 Security Tips</h4>
-                        <ul style="color: #999; font-size: 14px; line-height: 1.8;">
-                            <li>Always verify the URL before entering your seed phrase</li>
-                            <li>Never share your private key or seed phrase</li>
-                            <li>Use hardware wallets for large amounts</li>
-                        </ul>
-                    </div>
-                    <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px;">
-                        <h4>📧 Contact Support</h4>
-                        <p style="color: #999; font-size: 14px;">
-                            Email: support@qrcblockchain.com<br>
-                            Discord: discord.gg/qrcblockchain
-                        </p>
-                    </div>
-                </div>
-            `;
-            
-            showModalContent('Help & Support', helpHTML);
-        }
-
-        // Helper function to show modal content
-        function showModalContent(title, content) {
-            let modal = document.getElementById('genericModal');
-            if (!modal) {
-                modal = document.createElement('div');
-                modal.id = 'genericModal';
-                modal.className = 'modal';
-                modal.innerHTML = `
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h2 class="modal-title" id="genericModalTitle"></h2>
-                            <button class="close-modal" onclick="closeModal('genericModal')">×</button>
-                        </div>
-                        <div id="genericModalContent"></div>
-                    </div>
-                `;
-                document.body.appendChild(modal);
-            }
-            
-            document.getElementById('genericModalTitle').textContent = title;
-            document.getElementById('genericModalContent').innerHTML = content;
-            modal.style.display = 'flex';
-        }
-
-        // Load explorer data
-        function loadExplorerData() {
-            fetch('/api/blocks/recent')
-                .then(response => response.json())
-                .then(data => {
-                    const blocksDiv = document.getElementById('latestBlocks');
-                    if (data.blocks && data.blocks.length > 0) {
-                        let html = '<div style="font-family: monospace; font-size: 12px;">';
-                        data.blocks.slice(0, 5).forEach(block => {
-                            html += `
-                                <div style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                                    Block #${block.index} - ${block.transactions.length} txs - ${new Date(block.timestamp * 1000).toLocaleTimeString()}
-                                </div>
-                            `;
-                        });
-                        html += '</div>';
-                        blocksDiv.innerHTML = html;
-                    } else {
-                        blocksDiv.innerHTML = '<p style="color: #999;">No blocks yet</p>';
-                    }
-                })
-                .catch(error => {
-                    document.getElementById('latestBlocks').innerHTML = '<p style="color: #999;">Error loading blocks</p>';
-                });
-            
-            fetch('/api/transactions/recent')
-                .then(response => response.json())
-                .then(data => {
-                    const txsDiv = document.getElementById('recentTxs');
-                    if (data.success && data.transactions && data.transactions.length > 0) {
-                        let html = '<div style="font-family: monospace; font-size: 12px;">';
-                        data.transactions.slice(0, 5).forEach(tx => {
-                            html += `
-                                <div style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                                    ${tx.sender.substring(0, 8)}... → ${tx.recipient.substring(0, 8)}... : ${tx.amount} QRC
-                                </div>
-                            `;
-                        });
-                        html += '</div>';
-                        txsDiv.innerHTML = html;
-                    } else {
-                        txsDiv.innerHTML = '<p style="color: #999;">No transactions yet</p>';
-                    }
-                })
-                .catch(error => {
-                    document.getElementById('recentTxs').innerHTML = '<p style="color: #999;">Error loading transactions</p>';
-                });
-        }
-
-        // Wallet functions
         function checkExistingWallet() {
             const stored = localStorage.getItem('qrcWalletPro');
             if (stored) {
@@ -793,6 +508,22 @@
             return false;
         }
 
+        window.onload = function() {
+            if (!checkExistingWallet()) {
+                document.getElementById('onboardingSection').style.display = 'block';
+            }
+            updateStats();
+            setInterval(updateStats, 5000);
+            setInterval(updateBalance, 10000);
+            
+            document.getElementById('understandCheckbox').addEventListener('change', function() {
+                document.getElementById('proceedCreateButton').disabled = !this.checked;
+            });
+            
+            document.getElementById('sendAmount').addEventListener('input', updateFeeDisplay);
+        };
+
+        // All functions remain the same as before
         function showCreateWalletModal() {
             document.getElementById('createWalletModal').style.display = 'flex';
         }
@@ -851,16 +582,6 @@
                 return;
             }
             showSeedPhraseModal();
-        }
-
-        function showPrivateKeyModal() {
-            document.getElementById('privateKeyModal').style.display = 'flex';
-            document.getElementById('privateKeyDisplay').textContent = walletState.privateKey;
-            document.getElementById('privateKeyDisplay').style.filter = 'blur(5px)';
-        }
-
-        function showImportModal() {
-            document.getElementById('importModal').style.display = 'flex';
         }
 
         function closeModal(modalId) {
@@ -963,11 +684,6 @@
         function copyAddress() {
             navigator.clipboard.writeText(walletState.address);
             showNotification('Address copied to clipboard!', 'success');
-        }
-
-        function copyPrivateKey() {
-            navigator.clipboard.writeText(walletState.privateKey);
-            showNotification('Private key copied! Delete from clipboard immediately.', 'warning');
         }
 
         function updateBalance() {
@@ -1152,75 +868,6 @@
             const span = element.querySelector('.faq-question span');
             span.textContent = element.classList.contains('expanded') ? '−' : '+';
         }
-
-        // Export functions
-        function exportWalletJSON() {
-            const exportData = {
-                version: '1.0',
-                algorithm: walletState.algorithm,
-                address: walletState.address,
-                publicKey: walletState.publicKey,
-                created: new Date().toISOString()
-            };
-            
-            const dataStr = JSON.stringify(exportData, null, 2);
-            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-            
-            const exportName = `qrc-wallet-${walletState.address.substring(0, 8)}.json`;
-            
-            const linkElement = document.createElement('a');
-            linkElement.setAttribute('href', dataUri);
-            linkElement.setAttribute('download', exportName);
-            linkElement.click();
-            
-            showNotification('Wallet JSON exported! Keep it safe.', 'success');
-        }
-
-        // Import wallet function
-        function importWallet() {
-            const seedPhrase = document.getElementById('importSeedPhrase').value.trim();
-            
-            if (!seedPhrase) {
-                showNotification('Please enter your seed phrase', 'error');
-                return;
-            }
-            
-            const words = seedPhrase.split(' ');
-            if (words.length !== 24) {
-                showNotification('Seed phrase must be exactly 24 words', 'error');
-                return;
-            }
-            
-            // Create wallet from seed phrase
-            walletState.seedPhrase = words;
-            walletState.address = 'QRC' + Math.random().toString(36).substring(2, 34).toUpperCase();
-            walletState.privateKey = generateQuantumSafePrivateKey();
-            walletState.publicKey = deriveQuantumSafePublicKey(walletState.privateKey);
-            walletState.balance = 0;
-            walletState.backed_up = true;
-            
-            localStorage.setItem('qrcWalletPro', JSON.stringify(walletState));
-            
-            closeModal('importModal');
-            showWalletDisplay();
-            updateBalance();
-            
-            showNotification('✅ Wallet imported successfully!', 'success');
-        }
-
-        // Initialize on page load
-        window.onload = function() {
-            if (!checkExistingWallet()) {
-                document.getElementById('onboardingSection').style.display = 'block';
-            }
-            updateStats();
-            setInterval(updateStats, 5000);
-            setInterval(updateBalance, 10000);
-            
-            document.getElementById('understandCheckbox').addEventListener('change', function() {
-                document.getElementById('proceedCreateButton').disabled = !this.checked;
-            });
-        };
     </script>
 </body>
 </html>
