@@ -264,6 +264,67 @@ def mining_stats():
         'mining_algorithm': 'SHA3-256 with Dilithium signatures'
     })
 
+@app.route('/api/wallet/import', methods=['POST'])
+def import_wallet():
+    """Import wallet from external provider (MetaMask, etc)"""
+    data = request.json
+    address = data.get('address')
+    external_address = data.get('externalAddress')
+    wallet_type = data.get('walletType')
+    
+    if not address:
+        return jsonify({'success': False, 'error': 'No address provided'})
+    
+    # Create wallet entry
+    blockchain.wallets[address] = {
+        'balance': 100.0,  # Give some test tokens
+        'created': time.time(),
+        'external_address': external_address,
+        'wallet_type': wallet_type,
+        'algorithm': 'CRYSTALS-Dilithium2',
+        'quantum_resistant': True
+    }
+    
+    return jsonify({
+        'success': True,
+        'address': address,
+        'balance': 100.0
+    })
+
+@app.route('/api/faucet/claim', methods=['POST'])
+def claim_faucet():
+    """Test faucet - gives 100 QRC once per day"""
+    data = request.json
+    address = data.get('address')
+    
+    if not address:
+        return jsonify({'success': False, 'error': 'No address provided'})
+    
+    if address not in blockchain.wallets:
+        return jsonify({'success': False, 'error': 'Wallet not found'})
+    
+    # Give 100 test QRC
+    blockchain.wallets[address]['balance'] += 100
+    
+    # Create faucet transaction
+    transaction = {
+        'sender': 'FAUCET',
+        'recipient': address,
+        'amount': 100,
+        'fee': 0,
+        'timestamp': time.time(),
+        'type': 'faucet',
+        'quantum_resistant': True
+    }
+    
+    blockchain.add_transaction(transaction)
+    
+    return jsonify({
+        'success': True,
+        'amount': 100,
+        'new_balance': blockchain.wallets[address]['balance']
+    })
+
 @app.route('/api/quantum/security')
 def quantum_security():
     """Endpoint to check quantum security status"""
