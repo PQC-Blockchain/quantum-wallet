@@ -1,0 +1,84 @@
+# Sensitive configuration
+config/config.json
+SENSITIVE_WALLETS.json
+*.key
+*.pem
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.env
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+blockchain.db
+
+# Logs
+*.log
+logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Backups
+*.backup
+*.bak
+*_backup.*
+
+# Environment and config
+.env
+config/config.json
+config/node_config.json
+SENSITIVE_WALLETS.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+
+# Blockchain data
+blockchain.db
+blockchain_*.db
+wallets/
+logs/
+*.log
+
+# Keys and secrets
+*.key
+*.pem
+private_keys/
+node_identity.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test files
+test_*.py
+check_*.pyquantum_web_wallet_backup*.html 
+api_test.html 
+{ 

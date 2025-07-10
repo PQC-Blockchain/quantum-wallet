@@ -1,28 +1,27 @@
-# PQC Blockchain - Quantum-Resistant Future
+# PQC Blockchain - Quantum-Resistant Blockchain Platform
 
-A quantum-resistant blockchain built from scratch, designed to withstand attacks from quantum computers.
+A post-quantum cryptographic blockchain with built-in services, revenue generation, and quantum-resistant security.
 
-Features
-- 🔐 Quantum-resistant cryptography (Dilithium/Falcon ready)
-- ⛏️ Proof of Work consensus
-- 💰 Native QRC token
-- 📊 Balance tracking
-- 🔗 Multi-block chain validation
+## 🚀 Features
 
-Why This Matters
+- 🔐 **Quantum-Resistant Security**: CRYSTALS-Dilithium signatures (NIST approved)
+- ⚡ **High Performance**: 1,773 TPS capability
+- 💰 **Built-in Revenue System**: Developer fees on all transactions
+- 🪙 **Token Creation**: Deploy quantum-safe tokens (25 QRC fee)
+- 🌐 **Name Service**: Register .qrc blockchain domains
+- 💾 **Storage Service**: Decentralized file storage
+- ✅ **Document Verification**: On-chain proof system
+- 🎁 **Faucet System**: Easy testing with free tokens
+
+## 📊 Why This Matters
+
 - Bitcoin and Ethereum use ECDSA (breakable by quantum computers)
 - $2.7 trillion crypto market at risk
-- This blockchain is built quantum-safe from day one
+- This blockchain is quantum-safe with revenue generation built-in
+- Multiple utility services beyond just transactions
 
-Quick Start
-🌐 Live Network
-- **Blockchain**: https://pqc-blockchain.onrender.com
-- **Token Contract**: `0xcdE8Fb1574F25f437a8566faF255a95129935D0`
-- **Trade QRC**: https://pancakeswap.finance/swap?outputCurrency=0xcdE8Fb1574F25f437a8566faF255a95129935D0
+## 🚀 Quick Start
 
-QRC Token on BSC
-- **Network**: Binance Smart Chain
-- **Symbol**: QRC
-- **Decimals**: 18
-- **Total Supply**: 100,000,000 QRC
-python pqc_demo.py
+1. **Install Dependencies**
+   ```bash
+   pip install -r requirements.txt
