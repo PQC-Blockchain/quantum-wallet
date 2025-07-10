@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: pqc-blockchain
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python pqc_blockchain_server_enhanced.py"
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: PQC_DEVELOPER_ADDRESS
+        sync: false
+      - key: PQC_TREASURY_ADDRESS
+        sync: false
