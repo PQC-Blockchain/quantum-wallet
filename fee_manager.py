@@ -89,3 +89,46 @@ class FeeManager:
             })
         
         return fee_transactions, fees
+    
+    def calculate_feature_fee(self, feature_type, **kwargs):
+        """Calculate fee for blockchain features (tokens, names, storage)"""
+        if feature_type == "token_creation":
+            total_fee = float(self.fees["features"]["token_creation_fee"])
+        elif feature_type == "name_registration":
+            total_fee = float(self.fees["features"]["name_registration_fee"])
+        elif feature_type == "storage":
+            size_mb = kwargs.get('size_mb', 1)
+            total_fee = float(self.fees["features"]["storage_fee_per_mb"] * Decimal(str(size_mb)))
+        else:
+            total_fee = 0
+            
+        return {
+            "total_fee": total_fee,
+            "developer_fee": total_fee,  # 100% goes to developer for features
+            "network_fee": 0,
+            "fee_transactions": [
+                {
+                    "recipient": self.developer_address,
+                    "amount": total_fee,
+                    "type": f"{feature_type}_fee"
+                }
+            ]
+        }
+    
+    def create_fee_distribution_transactions(self, main_transaction, fee_structure):
+        """Create fee distribution transactions for features"""
+        fee_transactions = []
+        timestamp = main_transaction.get('timestamp', time.time())
+        
+        for i, fee_tx in enumerate(fee_structure.get('fee_transactions', [])):
+            fee_transactions.append({
+                "sender": main_transaction['sender'],
+                "recipient": fee_tx['recipient'],
+                "amount": fee_tx['amount'],
+                "timestamp": timestamp + (0.001 * (i + 1)),
+                "type": fee_tx['type'],
+                "signature": main_transaction.get('signature', ''),
+                "quantum_resistant": True
+            })
+            
+        return fee_transactions

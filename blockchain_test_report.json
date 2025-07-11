@@ -1,0 +1,36 @@
+{
+  "timestamp": "2025-07-11T10:36:50.926362",
+  "results": {
+    "passed": [
+      "Quantum-resistant wallet created successfully",
+      "Quantum security verified: CRYSTALS-Dilithium2",
+      "Test wallets created successfully",
+      "Fee calculation working",
+      "Transaction created successfully",
+      "Retrieved 6 recent blocks",
+      "Blocks include quantum signatures",
+      "Block structure valid",
+      "Blockchain stats retrieved",
+      "Quantum resistance confirmed",
+      "Mining mechanism operational",
+      "Fee system configured",
+      "Revenue tracking operational",
+      "Token creation service operational",
+      "Storage service operational",
+      "Excellent performance - exceeds 1000 TPS",
+      "Transaction pool active with 19 recent transactions",
+      "Quantum-resistant signature algorithm: CRYSTALS-Dilithium2",
+      "Input validation working - rejected invalid transaction",
+      "Rate limiting is active",
+      "Node is responding",
+      "API endpoints accessible",
+      "Faucet operational",
+      "Faucet rate limiting working (24h cooldown)"
+    ],
+    "failed": [
+      "Cryptography test error: name 'keys' is not defined"
+    ],
+    "warnings": []
+  },
+  "health_score": 96.0
+}

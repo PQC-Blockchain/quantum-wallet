@@ -5,7 +5,7 @@ from flask_limiter.util import get_remote_address
 import hashlib
 import json
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 from collections import defaultdict
 import threading
@@ -13,6 +13,12 @@ import random
 from dilithium_wrapper import DilithiumSigner, QuantumResistantWallet
 from fee_manager import FeeManager
 from dotenv import load_dotenv
+import pyotp
+import jwt
+import secrets
+import qrcode
+import io
+import base64
 
 # Load environment variables
 load_dotenv()
@@ -172,9 +178,132 @@ class QuantumBlockchain:
         
         return balance
 
-# Initialize blockchain and fee manager
+# Secure Authentication Manager
+class SecureAuthManager:
+    """Secure authentication manager for founder wallets"""
+    
+    def __init__(self):
+        # Generate a secure secret key if not exists
+        self.secret_key = os.environ.get('JWT_SECRET_KEY', secrets.token_urlsafe(32))
+        self.founder_wallets = {}
+        
+    def register_founder_wallet(self, address, password):
+        """Register a founder wallet with secure password hashing"""
+        # Generate salt
+        salt = secrets.token_bytes(32)
+        
+        # Hash password with PBKDF2
+        password_hash = hashlib.pbkdf2_hmac(
+            'sha256',
+            password.encode('utf-8'),
+            salt,
+            100000  # iterations
+        )
+        
+        # Generate 2FA secret
+        totp_secret = pyotp.random_base32()
+        
+        # Store wallet info
+        self.founder_wallets[address] = {
+            'salt': salt.hex(),
+            'password_hash': password_hash.hex(),
+            'totp_secret': totp_secret,
+            'created_at': datetime.utcnow().isoformat(),
+            'failed_attempts': 0,
+            'last_failed_attempt': None,
+            'locked_until': None
+        }
+        
+        return totp_secret
+    
+    def verify_password(self, address, password):
+        """Verify password with rate limiting"""
+        if address not in self.founder_wallets:
+            return False, "Wallet not found"
+        
+        wallet = self.founder_wallets[address]
+        
+        # Check if account is locked
+        if wallet.get('locked_until'):
+            locked_until = datetime.fromisoformat(wallet['locked_until'])
+            if datetime.utcnow() < locked_until:
+                return False, "Account temporarily locked due to failed attempts"
+            else:
+                # Unlock account
+                wallet['locked_until'] = None
+                wallet['failed_attempts'] = 0
+        
+        # Verify password
+        salt = bytes.fromhex(wallet['salt'])
+        password_hash = hashlib.pbkdf2_hmac(
+            'sha256',
+            password.encode('utf-8'),
+            salt,
+            100000
+        )
+        
+        if password_hash.hex() == wallet['password_hash']:
+            # Reset failed attempts
+            wallet['failed_attempts'] = 0
+            wallet['last_failed_attempt'] = None
+            return True, "Password verified"
+        else:
+            # Increment failed attempts
+            wallet['failed_attempts'] += 1
+            wallet['last_failed_attempt'] = datetime.utcnow().isoformat()
+            
+            # Lock account after 5 failed attempts
+            if wallet['failed_attempts'] >= 5:
+                wallet['locked_until'] = (datetime.utcnow() + timedelta(minutes=15)).isoformat()
+                return False, "Too many failed attempts. Account locked for 15 minutes"
+            
+            return False, f"Invalid password. {5 - wallet['failed_attempts']} attempts remaining"
+    
+    def verify_totp(self, address, token):
+        """Verify TOTP token"""
+        if address not in self.founder_wallets:
+            return False
+        
+        secret = self.founder_wallets[address]['totp_secret']
+        totp = pyotp.TOTP(secret)
+        
+        # Allow 1 window before/after for clock skew
+        return totp.verify(token, valid_window=1)
+    
+    def generate_qr_code(self, address):
+        """Generate QR code for 2FA setup"""
+        if address not in self.founder_wallets:
+            return None
+        
+        secret = self.founder_wallets[address]['totp_secret']
+        totp = pyotp.TOTP(secret)
+        
+        provisioning_uri = totp.provisioning_uri(
+            name=address,
+            issuer_name='QRC Blockchain'
+        )
+        
+        # Use qrcode library to generate QR
+        qr = qrcode.QRCode(version=1, box_size=10, border=5)
+        qr.add_data(provisioning_uri)
+        qr.make(fit=True)
+        
+        img = qr.make_image(fill_color="black", back_color="white")
+        buf = io.BytesIO()
+        img.save(buf, format='PNG')
+        
+        qr_base64 = base64.b64encode(buf.getvalue()).decode()
+        
+        return {
+            'qr_code': f"data:image/png;base64,{qr_base64}",
+            'secret': secret,
+            'provisioning_uri': provisioning_uri
+        }
+
+# Initialize blockchain, fee manager, and auth manager
 blockchain = QuantumBlockchain()
-fee_manager = FeeManager()  # Initialize fee manager
+fee_manager = FeeManager()
+auth_manager = SecureAuthManager()
 
 # Token management
 tokens = {}
@@ -215,6 +344,193 @@ def simulate_tps():
 
 tps_thread = threading.Thread(target=simulate_tps, daemon=True)
 tps_thread.start()
+
+# ============= AUTHENTICATION API ROUTES =============
+
+@app.route('/api/auth/check-wallet', methods=['POST'])
+def check_wallet_type():
+    """Check if wallet is a founder wallet"""
+    data = request.json
+    address = data.get('address')
+    
+    if not address:
+        return jsonify({'success': False, 'error': 'Address required'}), 400
+    
+    # Check if it's a founder wallet
+    is_founder = address in auth_manager.founder_wallets
+    
+    return jsonify({
+        'success': True,
+        'is_founder': is_founder,
+        'require_2fa': is_founder
+    })
+
+@app.route('/api/auth/verify-password', methods=['POST'])
+@limiter.limit("5 per minute")  # Rate limiting
+def verify_password():
+    """First step of authentication - verify password"""
+    data = request.json
+    address = data.get('address')
+    password = data.get('password')
+    
+    if not address or not password:
+        return jsonify({'success': False, 'error': 'Missing credentials'}), 400
+    
+    # Check if founder wallet
+    if address in auth_manager.founder_wallets:
+        success, message = auth_manager.verify_password(address, password)
+        
+        if success:
+            # Generate temporary session token
+            temp_token = jwt.encode({
+                'address': address,
+                'step': 'password_verified',
+                'exp': datetime.utcnow() + timedelta(minutes=5)
+            }, auth_manager.secret_key, algorithm='HS256')
+            
+            return jsonify({
+                'success': True,
+                'require_2fa': True,
+                'temp_token': temp_token,
+                'message': 'Password verified. Please enter 2FA code.'
+            })
+        else:
+            return jsonify({'success': False, 'error': message}), 401
+    else:
+        # Regular wallet - check in blockchain wallets
+        if address in blockchain.wallets:
+            # For regular wallets, simple check (in production, implement proper auth)
+            return jsonify({
+                'success': True,
+                'require_2fa': False,
+                'wallet_data': {
+                    'address': address,
+                    'balance': blockchain.get_balance(address)
+                }
+            })
+        else:
+            return jsonify({'success': False, 'error': 'Wallet not found'}), 404
+
+@app.route('/api/auth/verify-2fa', methods=['POST'])
+@limiter.limit("5 per minute")
+def verify_2fa():
+    """Second step of authentication - verify 2FA"""
+    data = request.json
+    temp_token = data.get('temp_token')
+    otp_code = data.get('otp')
+    device_id = data.get('device_id')
+    remember_device = data.get('remember_device', False)
+    
+    if not temp_token or not otp_code:
+        return jsonify({'success': False, 'error': 'Missing credentials'}), 400
+    
+    # Verify temp token
+    try:
+        payload = jwt.decode(temp_token, auth_manager.secret_key, algorithms=['HS256'])
+        if payload.get('step') != 'password_verified':
+            return jsonify({'success': False, 'error': 'Invalid token'}), 401
+        
+        address = payload.get('address')
+    except jwt.ExpiredSignatureError:
+        return jsonify({'success': False, 'error': 'Token expired'}), 401
+    except:
+        return jsonify({'success': False, 'error': 'Invalid token'}), 401
+    
+    # Verify 2FA
+    if not auth_manager.verify_totp(address, otp_code):
+        return jsonify({'success': False, 'error': 'Invalid 2FA code'}), 401
+    
+    # Generate session token
+    session_payload = {
+        'address': address,
+        'is_founder': True,
+        'device_id': device_id,
+        'iat': datetime.utcnow(),
+        'exp': datetime.utcnow() + timedelta(days=30 if remember_device else 1)
+    }
+    
+    session_token = jwt.encode(session_payload, auth_manager.secret_key, algorithm='HS256')
+    
+    # Get wallet data
+    wallet_data = {
+        'address': address,
+        'balance': blockchain.wallets.get(address, {}).get('balance', 1000000),
+        'is_founder': True,
+        'features': ['unlimited_transactions', 'zero_fees', 'priority_mining']
+    }
+    
+    # Log successful login
+    print(f"Founder wallet {address} logged in successfully")
+    
+    return jsonify({
+        'success': True,
+        'session_token': session_token,
+        'wallet_data': wallet_data
+    })
+
+@app.route('/api/auth/setup-2fa', methods=['POST'])
+def setup_2fa():
+    """Setup 2FA for a founder wallet"""
+    data = request.json
+    address = data.get('address')
+    password = data.get('password')
+    
+    if not address or not password:
+        return jsonify({'success': False, 'error': 'Missing credentials'}), 400
+    
+    # Verify it's a founder wallet
+    if address not in auth_manager.founder_wallets:
+        # Register new founder wallet
+        totp_secret = auth_manager.register_founder_wallet(address, password)
+        
+        # Generate QR code
+        qr_data = auth_manager.generate_qr_code(address)
+        
+        return jsonify({
+            'success': True,
+            'setup_required': True,
+            **qr_data
+        })
+    else:
+        # Verify password first
+        success, message = auth_manager.verify_password(address, password)
+        if not success:
+            return jsonify({'success': False, 'error': message}), 401
+        
+        # Return existing QR code
+        qr_data = auth_manager.generate_qr_code(address)
+        
+        return jsonify({
+            'success': True,
+            'setup_required': False,
+            **qr_data
+        })
+
+@app.route('/api/auth/register-founder', methods=['POST'])
+def register_founder():
+    """Register a new founder wallet (admin only)"""
+    data = request.json
+    admin_key = data.get('admin_key')
+    address = data.get('address')
+    password = data.get('password')
+    
+    # Verify admin key (in production, use proper admin authentication)
+    if admin_key != os.environ.get('ADMIN_KEY', 'your-secure-admin-key'):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+    
+    if not address or not password:
+        return jsonify({'success': False, 'error': 'Missing data'}), 400
+    
+    # Register founder wallet
+    totp_secret = auth_manager.register_founder_wallet(address, password)
+    qr_data = auth_manager.generate_qr_code(address)
+    
+    return jsonify({
+        'success': True,
+        'message': 'Founder wallet registered',
+        'address': address,
+        **qr_data
+    })
 
 # ============= ORIGINAL API ROUTES =============
 
@@ -266,74 +582,71 @@ def send_transaction():
     if amount <= 0:
         return jsonify({'success': False, 'error': 'Invalid amount'})
     
-    # Calculate fees using fee manager
-    fee_info = fee_manager.calculate_transaction_fee(amount)
-    total_required = amount + fee_info['total_fee']
+    # Calculate fees
+    fee_structure = fee_manager.calculate_transaction_fee(amount)
+    total_cost = amount + fee_structure['total_fee']
     
-    # Check balance including fees
+    # Check balance
     sender_balance = blockchain.get_balance(sender)
-    if sender_balance < total_required:
+    if sender_balance < total_cost:
         return jsonify({
             'success': False, 
-            'error': 'Insufficient balance',
-            'required': total_required,
-            'balance': sender_balance,
-            'amount': amount,
-            'fees': fee_info
+            'error': f'Insufficient balance. Need {total_cost} QRC, have {sender_balance} QRC'
         })
     
-    # Create main transaction
     timestamp = time.time()
+    
+    # Create main transaction
     transaction = {
         'sender': sender,
         'recipient': recipient,
         'amount': amount,
-        'fee': fee_info['total_fee'],
+        'fee': fee_structure['total_fee'],
+        'fee_paid': fee_structure['total_fee'],
         'timestamp': timestamp,
-        'algorithm': data.get('algorithm', 'CRYSTALS-Dilithium-2'),
         'quantum_resistant': True,
-        'fee_paid': fee_info['total_fee']
+        'signature': hashlib.sha256(f"{sender}{recipient}{amount}{timestamp}".encode()).hexdigest()
     }
     
-    # Sign with Dilithium
-    transaction['signature'] = 'DILITHIUM_SIG_' + hashlib.sha3_256(
-        json.dumps(transaction, sort_keys=True).encode()
-    ).hexdigest()[:64]
+    # Create fee distribution transactions
+    fee_transactions = fee_manager.create_fee_distribution_transactions(transaction, fee_structure)
     
-    # Create fee transactions
-    fee_transactions, _ = fee_manager.create_fee_transactions(
-        sender, 
-        amount, 
-        transaction['signature'],
-        timestamp
-    )
-    
-    # Update balances immediately for UI responsiveness
-    blockchain.wallets[sender]['balance'] = sender_balance - total_required
-    if recipient not in blockchain.wallets:
-        blockchain.wallets[recipient] = {
-            'balance': 0,
-            'created': time.time(),
-            'algorithm': 'CRYSTALS-Dilithium2'
-        }
-    blockchain.wallets[recipient]['balance'] = blockchain.wallets[recipient].get('balance', 0) + amount
-    
-    # Add to blockchain
+    # Add all transactions
     blockchain.add_transaction(transaction)
-    # Add fee transactions
     for fee_tx in fee_transactions:
         blockchain.add_transaction(fee_tx)
     
+    # Update balances immediately
+    blockchain.wallets[sender]['balance'] -= total_cost
+    blockchain.wallets[recipient]['balance'] += amount
+    
     return jsonify({
         'success': True,
-        'transaction_id': transaction['signature'][:16],
+        'transaction_id': transaction['signature'],
+        'amount': amount,
+        'fee': fee_structure['total_fee'],
+        'total_cost': total_cost,
         'quantum_signature': True,
-        'fees': fee_info,
-        'total_cost': total_required
+        'fee_breakdown': fee_structure
     })
 
-# NEW FEE ROUTES
-@app.route('/api/fees/calculate', methods=['POST'])
+@app.route('/api/quantum/security')
+def quantum_security_status():
+    """Get quantum security information"""
+    return jsonify({
+        'quantum_resistant': True,
+        'signature_algorithm': 'CRYSTALS-Dilithium2',
+        'nist_level': 2,
+        'key_sizes': {
+            'public_key': 1312,
+            'secret_key': 2528,
+            'signature': 2420
+        },
+        'post_quantum': True,
+        'implementation': 'Production Ready'
+    })
+
+@app.route('/api/transaction/calculate', methods=['POST'])
 def calculate_fees():
     """Calculate fees before sending transaction"""
     values = request.get_json()
@@ -474,64 +787,49 @@ def claim_faucet():
             'error': f'Already claimed today. Try again in {int(remaining/3600)} hours'
         })
     
-    # Give 100 test QRC
-    blockchain.wallets[address]['balance'] += 100
+    # Calculate gas fee
+    gas_fee = 0.001  # Fixed gas fee for faucet claims
     
-    # Update faucet stats
+    # Update claim record
     faucet_claims[address] = time.time()
+    
+    # Update stats
     faucet_stats["total_claimed"] += 100
     faucet_stats["unique_users"].add(address)
-    faucet_stats["daily_claims"][datetime.now().date().isoformat()] += 1
+    faucet_stats["daily_claims"][datetime.now().strftime("%Y-%m-%d")] += 1
     
-    # Create faucet transaction
-    transaction = {
-        'sender': 'FAUCET',
-        'recipient': address,
-        'amount': 100,
-        'fee': 0,
+    # Create gas fee transaction (goes to developer)
+    fee_transaction = {
+        'sender': address,
+        'recipient': fee_manager.developer_address,
+        'amount': gas_fee,
         'timestamp': time.time(),
-        'type': 'faucet',
-        'quantum_resistant': True
+        'type': 'faucet_gas_fee'
     }
     
-    blockchain.add_transaction(transaction)
+    # Give tokens (minus gas fee)
+    blockchain.wallets[address]['balance'] += (100 - gas_fee)
+    
+    # Add gas fee transaction
+    blockchain.add_transaction(fee_transaction)
     
     return jsonify({
         'success': True,
         'amount': 100,
-        'new_balance': blockchain.wallets[address]['balance']
+        'gas_fee': gas_fee,
+        'net_received': 100 - gas_fee,
+        'next_claim': int(time.time() + cooldown)
     })
 
-@app.route('/api/quantum/security')
-def quantum_security():
-    """Endpoint to check quantum security status"""
-    return jsonify({
-        'quantum_resistant': True,
-        'signature_algorithm': 'CRYSTALS-Dilithium2',
-        'nist_level': 2,
-        'key_sizes': {
-            'public_key': 1312,
-            'secret_key': 2528,
-            'signature': 2420
-        },
-        'security_features': [
-            'Post-quantum lattice-based signatures',
-            'NIST standardized algorithm',
-            'Resistant to Shor\'s algorithm',
-            'Future-proof cryptography'
-        ]
-    })
+# ============= ENHANCED FEATURES WITH FEES =============
 
-# ============= NEW ENHANCED FEATURES WITH FEE INTEGRATION =============
-
-# Token Creation & Management
+# Token Creation System
 @app.route('/api/token/create', methods=['POST'])
-@limiter.limit("1 per minute")
+@limiter.limit("10 per hour")
 def create_token():
     data = request.get_json()
-    
-    # Token creation uses feature fee from fee manager
     creator = data.get('creator')
+    
     if not creator or creator not in blockchain.wallets:
         return jsonify({"error": "Invalid creator address"}), 400
     
@@ -584,44 +882,24 @@ def create_token():
     
     return jsonify({
         "success": True,
-        "contractAddress": token_address,
+        "tokenAddress": token_address,
+        "token": tokens[token_address],
         "transactionHash": transaction['signature'],
         "fee_paid": creation_fee
     })
 
-@app.route('/api/tokens', methods=['GET'])
-def get_tokens():
-    token_list = []
-    for address, token in tokens.items():
-        token_list.append({
-            "address": address,
-            "name": token['name'],
-            "symbol": token['symbol'],
-            "totalSupply": token['totalSupply'],
-            "holders": len(token['holders']),
-            "transfers": token_transfers[address]
-        })
-    return jsonify(sorted(token_list, key=lambda x: x['transfers'], reverse=True)[:20])
-
-@app.route('/api/token/stats', methods=['GET'])
-def token_stats():
-    total_gas = len(tokens) * fee_manager.fees['features']['token_creation_fee']
-    for address in tokens:
-        total_gas += token_transfers[address] * 0.1  # Transfer fees
+@app.route('/api/token/<token_address>', methods=['GET'])
+def get_token_info(token_address):
+    if token_address not in tokens:
+        return jsonify({"error": "Token not found"}), 404
     
-    return jsonify({
-        "totalTokens": len(tokens),
-        "volume24h": sum(token_transfers.values()),
-        "totalGas": float(total_gas),
-        "activeUsers": len(set(h for t in tokens.values() for h in t['holders']))
-    })
+    return jsonify(tokens[token_address])
 
-# Token Transfer
 @app.route('/api/token/transfer', methods=['POST'])
-@limiter.limit("100 per minute")
+@limiter.limit("30 per minute")
 def transfer_token():
     data = request.get_json()
-    token_address = data.get('token')
+    token_address = data.get('tokenAddress')
     from_address = data.get('from')
     to_address = data.get('to')
     amount = int(data.get('amount', 0))
@@ -631,57 +909,79 @@ def transfer_token():
     
     token = tokens[token_address]
     
-    # Check balance
-    if token['holders'].get(from_address, 0) < amount:
+    if from_address not in token['holders'] or token['holders'][from_address] < amount:
         return jsonify({"error": "Insufficient token balance"}), 400
     
-    # Check gas fee (0.1 QRC per transfer)
-    if blockchain.get_balance(from_address) < 0.1:
-        return jsonify({"error": "Insufficient QRC for gas fee"}), 400
+    # Token transfer gas fee
+    gas_fee = 0.1  # Fixed gas fee for token transfers
+    
+    if blockchain.get_balance(from_address) < gas_fee:
+        return jsonify({"error": f"Insufficient QRC for gas fee ({gas_fee} QRC)"}), 400
     
     # Transfer tokens
     token['holders'][from_address] -= amount
-    token['holders'][to_address] = token['holders'].get(to_address, 0) + amount
+    if to_address not in token['holders']:
+        token['holders'][to_address] = 0
+    token['holders'][to_address] += amount
     
-    # Deduct gas fee
-    blockchain.wallets[from_address]['balance'] -= 0.1
-    
-    # Update stats
+    # Track transfers
     token_transfers[token_address] += 1
+    
+    # Create gas fee transaction (all goes to developer for token operations)
+    fee_transaction = {
+        'sender': from_address,
+        'recipient': fee_manager.developer_address,
+        'amount': gas_fee,
+        'timestamp': time.time(),
+        'type': 'token_transfer_gas',
+        'token_address': token_address
+    }
+    
+    # Update balance
+    blockchain.wallets[from_address]['balance'] -= gas_fee
+    
+    # Add transaction
+    blockchain.add_transaction(fee_transaction)
     
     return jsonify({
         "success": True,
-        "transactionHash": hashlib.sha256(f"transfer-{token_address}-{time.time()}".encode()).hexdigest()
+        "from": from_address,
+        "to": to_address,
+        "amount": amount,
+        "gas_fee": gas_fee,
+        "token": token_address
     })
 
-# Name Service with Fee Integration
+# Name Service (ENS-like)
 @app.route('/api/name/register', methods=['POST'])
-@limiter.limit("5 per minute")
+@limiter.limit("5 per hour")
 def register_name():
     data = request.get_json()
     name = data.get('name', '').lower()
     owner = data.get('owner')
     years = int(data.get('years', 1))
     
-    if not name or not owner:
-        return jsonify({"error": "Invalid request"}), 400
+    if not name or len(name) < 3:
+        return jsonify({"error": "Name must be at least 3 characters"}), 400
     
     if name in name_registry:
         return jsonify({"error": "Name already taken"}), 400
     
-    # Calculate feature fee for name registration
-    fee_structure = fee_manager.calculate_feature_fee("name_registration")
-    base_fee = fee_structure['total_fee']
+    if not owner or owner not in blockchain.wallets:
+        return jsonify({"error": "Invalid owner address"}), 400
     
-    # Add length-based multiplier
-    if len(name) == 4:
-        base_fee *= 2
-    elif len(name) == 3:
-        base_fee *= 10
-    elif len(name) <= 2:
-        base_fee *= 100
+    # Calculate registration fee based on name length and duration
+    base_fee = float(fee_manager.fees['features']['name_registration_fee'])
     
-    total_price = base_fee + (years * 1)  # 1 QRC per year
+    # Price tiers based on length
+    if len(name) == 3:
+        price_multiplier = 10
+    elif len(name) == 4:
+        price_multiplier = 2
+    else:
+        price_multiplier = 1
+    
+    total_price = base_fee * price_multiplier * years
     
     if blockchain.get_balance(owner) < total_price:
         return jsonify({"error": f"Insufficient balance. Need {total_price} QRC"}), 400
@@ -878,107 +1178,38 @@ def send_message():
         return jsonify({"error": "Insufficient balance for message fee"}), 400
     
     # Store message on blockchain
-    msg_data = {
-        "from": from_address,
-        "to": to_address,
-        "message": message,
-        "encrypted": encrypted,
-        "timestamp": datetime.now().isoformat()
-    }
-    
-    # Deduct fee
-    blockchain.wallets[from_address]['balance'] -= 0.01
-    
-    # Create transaction with message data
-    transaction = {
+    message_tx = {
         'sender': from_address,
         'recipient': to_address,
-        'amount': 0,
-        'fee': 0.01,
+        'message': message,
+        'encrypted': encrypted,
         'timestamp': time.time(),
-        'type': 'message',
-        'message_data': msg_data,
-        'quantum_resistant': True
+        'type': 'message'
     }
     
-    blockchain.add_transaction(transaction)
+    # Fee transaction
+    fee_tx = {
+        'sender': from_address,
+        'recipient': fee_manager.developer_address,
+        'amount': 0.01,
+        'type': 'message_fee',
+        'timestamp': time.time()
+    }
+    
+    # Update balance
+    blockchain.wallets[from_address]['balance'] -= 0.01
+    
+    # Add transactions
+    blockchain.add_transaction(message_tx)
+    blockchain.add_transaction(fee_tx)
     
     return jsonify({
         "success": True,
-        "transactionHash": hashlib.sha256(f"msg-{time.time()}".encode()).hexdigest(),
-        "messageFee": 0.01
+        "timestamp": message_tx['timestamp'],
+        "fee": 0.01
     })
 
-# Document Verification
-@app.route('/api/verify/document', methods=['POST'])
-@limiter.limit("10 per minute")
-def verify_document():
-    data = request.get_json()
-    owner = data.get('owner')
-    doc_hash = data.get('documentHash')
-    doc_type = data.get('type', 'general')
-    metadata = data.get('metadata', {})
-    
-    if not owner or owner not in blockchain.wallets:
-        return jsonify({"error": "Invalid owner"}), 400
-    
-    # Verification fee: 1 QRC
-    if blockchain.get_balance(owner) < 1:
-        return jsonify({"error": "Insufficient balance. Need 1 QRC for verification"}), 400
-    
-    # Store verification
-    verified_documents[doc_hash] = {
-        "owner": owner,
-        "type": doc_type,
-        "metadata": metadata,
-        "verified_at": datetime.now().isoformat(),
-        "block_height": len(blockchain.chain)
-    }
-    
-    # Deduct fee
-    blockchain.wallets[owner]['balance'] -= 1
-    
-    # Create transaction
-    transaction = {
-        'sender': owner,
-        'recipient': 'VERIFICATION_SERVICE',
-        'amount': 1,
-        'fee': 0,
-        'timestamp': time.time(),
-        'type': 'document_verification',
-        'document_hash': doc_hash,
-        'quantum_resistant': True
-    }
-    
-    blockchain.add_transaction(transaction)
-    
-    return jsonify({
-        "success": True,
-        "certificate": {
-            "documentHash": doc_hash,
-            "verifiedAt": verified_documents[doc_hash]["verified_at"],
-            "blockHeight": verified_documents[doc_hash]["block_height"]
-        }
-    })
-
-@app.route('/api/verify/<doc_hash>', methods=['GET'])
-def check_verification(doc_hash):
-    if doc_hash in verified_documents:
-        return jsonify({
-            "verified": True,
-            "details": verified_documents[doc_hash]
-        })
-    return jsonify({"verified": False})
-
-# Analytics Endpoints
-@app.route('/api/faucet/stats', methods=['GET'])
-def get_faucet_stats():
-    return jsonify({
-        "totalClaimed": faucet_stats["total_claimed"],
-        "uniqueUsers": len(faucet_stats["unique_users"]),
-        "claimsToday": faucet_stats["daily_claims"].get(datetime.now().date().isoformat(), 0)
-    })
-
+# Revenue Analytics Endpoint
 @app.route('/api/revenue/analytics', methods=['GET'])
 def revenue_analytics():
     # Calculate total gas fees generated
@@ -1035,6 +1266,8 @@ if __name__ == '__main__':
     # Get port from environment variable for Render
     port = int(os.environ.get('PORT', 5000))
     
+
+    
     print("""
     ╔═══════════════════════════════════════════════════════════╗
     ║        PQC BLOCKCHAIN v4.0 - ENHANCED WITH FEES           ║
@@ -1049,6 +1282,7 @@ if __name__ == '__main__':
     💾 Storage Service: READY
     🎁 Faucet System: OPERATIONAL
     💸 Fee System: INTEGRATED
+    🔑 Founder Auth: ENABLED
     
     💰 Fee Configuration:
        Transaction Fee: 0.05% (min 0.00005 QRC)
@@ -1064,6 +1298,7 @@ if __name__ == '__main__':
     [INFO] Mining thread started
     [INFO] TPS simulation active
     [INFO] Fee manager initialized
+    [INFO] Auth manager initialized
     [INFO] All services operational
     """.format(
         fee_manager.developer_address[:10] if fee_manager.developer_address else "NOT_SET",

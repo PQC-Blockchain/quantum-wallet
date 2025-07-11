@@ -82,3 +82,10 @@ test_*.py
 check_*.pyquantum_web_wallet_backup*.html 
 api_test.html 
 { 
+
+.env
+*.pyc
+__pycache__/
+founder_2fa_qr.png
+*.log
+*.db

@@ -1,0 +1,54 @@
+{
+  "blockchain": {
+    "name": "QRC Blockchain",
+    "symbol": "QRC",
+    "version": "4.0",
+    "genesis_timestamp": 1704067200,
+    "block_time": 30,
+    "block_reward": 10,
+    "halving_interval": 210000,
+    "max_supply": 21000000
+  },
+  "network": {
+    "port": 5000,
+    "host": "0.0.0.0",
+    "main_nodes": [
+      "http://node1.qrcblockchain.com:5000",
+      "http://node2.qrcblockchain.com:5000"
+    ]
+  },
+  "wallets": {
+    "genesis_address": "YOUR_GENESIS_WALLET_ADDRESS_HERE",
+    "mining_reward_address": "YOUR_MINING_REWARD_ADDRESS_HERE",
+    "fee_collection_address": "YOUR_FEE_COLLECTION_ADDRESS_HERE",
+    "developer_fund_address": "YOUR_DEV_FUND_ADDRESS_HERE"
+  },
+  "fees": {
+    "transaction_fee_percentage": 0.002,
+    "minimum_fee": 0.01,
+    "developer_fee_percentage": 0.001,
+    "features": {
+      "token_creation_fee": 100,
+      "name_registration_fee": 10,
+      "storage_fee_per_mb": 1
+    }
+  },
+  "security": {
+    "api_key_required": false,
+    "admin_api_key": "GENERATE_YOUR_OWN_SECURE_KEY_HERE",
+    "enable_rate_limiting": true,
+    "max_requests_per_minute": 60
+  },
+  "faucet": {
+    "enabled": true,
+    "amount": 100,
+    "cooldown_hours": 24,
+    "max_claims_per_address": 10
+  },
+  "revenue_sharing": {
+    "enabled": true,
+    "developer_percentage": 1,
+    "node_operator_percentage": 0.5,
+    "community_fund_percentage": 0.5
+  }
+}
