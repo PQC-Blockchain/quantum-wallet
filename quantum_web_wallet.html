@@ -9,126 +9,757 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%); color: #ffffff; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 20px; }
         
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
         /* Login Screen Styles */
-        .login-container { 
-            width: 100%; 
-            max-width: 400px; 
-            background: rgba(255, 255, 255, 0.05); 
-            padding: 40px; 
-            border-radius: 24px; 
-            backdrop-filter: blur(20px); 
-            border: 1px solid rgba(255, 255, 255, 0.1); 
+        .login-container {
+            width: 100%;
+            max-width: 400px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 40px;
+            border-radius: 24px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             margin-top: 100px;
         }
+
         .login-logo { text-align: center; margin-bottom: 30px; }
-        .login-logo .logo { width: 80px; height: 80px; background: #00ff88; border-radius: 20px; display: inline-flex; align-items: center; justify-content: center; font-size: 36px; font-weight: bold; color: #000; margin-bottom: 20px; }
-        .login-title { font-size: 24px; text-align: center; margin-bottom: 10px; }
-        .login-subtitle { color: #999; text-align: center; margin-bottom: 30px; }
-        .input-group { margin-bottom: 20px; }
-        .input-label { display: block; margin-bottom: 8px; color: #999; font-size: 14px; }
-        .input-field { width: 100%; padding: 15px; border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 8px; background: rgba(255, 255, 255, 0.05); color: white; font-size: 16px; transition: all 0.3s; }
-        .input-field:focus { outline: none; border-color: #00ff88; background: rgba(255, 255, 255, 0.08); }
-        .password-toggle { position: relative; }
-        .password-toggle-btn { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #999; cursor: pointer; font-size: 20px; }
-        .error-message { background: rgba(255, 107, 107, 0.1); border: 1px solid #ff6b6b; padding: 10px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; display: none; }
-        .success-message { background: rgba(0, 255, 136, 0.1); border: 1px solid #00ff88; padding: 10px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; display: none; }
         
-        /* Main App Styles */
-        .app-container { width: 100%; display: none; }
-        .main-header { width: 100%; max-width: 1200px; display: flex; justify-content: space-between; align-items: center; margin: 0 auto 40px; padding: 20px 0; }
-        .logo-section { display: flex; align-items: center; gap: 15px; }
-        .logo { width: 50px; height: 50px; background: #00ff88; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000; }
-        .logo-text { font-size: 24px; font-weight: 700; }
-        .nav-links { display: flex; gap: 30px; align-items: center; }
-        .nav-link { color: #999; text-decoration: none; transition: color 0.3s; font-size: 14px; cursor: pointer; }
-        .nav-link:hover { color: #00ff88; }
-        .user-menu { display: flex; align-items: center; gap: 20px; }
-        .user-info { display: flex; align-items: center; gap: 10px; padding: 8px 16px; background: rgba(255, 255, 255, 0.05); border-radius: 20px; }
-        .user-avatar { width: 32px; height: 32px; background: #00ff88; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000; }
-        .logout-btn { background: none; border: 1px solid #ff6b6b; color: #ff6b6b; padding: 8px 16px; border-radius: 8px; cursor: pointer; transition: all 0.3s; }
-        .logout-btn:hover { background: #ff6b6b; color: white; }
-        .network-indicator { display: flex; align-items: center; gap: 8px; background: rgba(0, 255, 136, 0.1); padding: 8px 16px; border-radius: 20px; font-size: 12px; }
-        .network-dot { width: 8px; height: 8px; background: #00ff88; border-radius: 50%; animation: pulse 2s infinite; }
-        .main-content { width: 100%; max-width: 1200px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin: 0 auto 40px; }
-        .stats-section { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
-        .stat-card { background: rgba(255, 255, 255, 0.05); padding: 24px; border-radius: 16px; backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); transition: all 0.3s ease; }
-        .stat-card:hover { transform: translateY(-5px); background: rgba(255, 255, 255, 0.08); }
-        .stat-value { font-size: 32px; font-weight: 700; color: #00ff88; margin-bottom: 5px; }
-        .stat-label { font-size: 12px; color: #999; text-transform: uppercase; letter-spacing: 1px; }
-        .wallet-section { background: rgba(255, 255, 255, 0.05); padding: 40px; border-radius: 24px; backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3); }
-        .wallet-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .wallet-title { font-size: 20px; font-weight: 600; }
-        .wallet-actions { display: flex; gap: 10px; }
-        .action-btn { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: white; padding: 8px 16px; border-radius: 8px; cursor: pointer; transition: all 0.3s; font-size: 14px; }
-        .action-btn:hover { background: rgba(255, 255, 255, 0.1); transform: translateY(-2px); }
-        .balance-section { margin-bottom: 30px; }
-        .balance-label { font-size: 14px; color: #999; margin-bottom: 10px; }
-        .balance-amount { font-size: 48px; font-weight: 700; color: #00ff88; margin-bottom: 10px; }
-        .balance-usd { font-size: 18px; color: #999; }
-        .wallet-display { background: rgba(0, 0, 0, 0.3); padding: 20px; border-radius: 12px; margin-bottom: 30px; }
-        .wallet-label { font-size: 12px; color: #999; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
-        .wallet-address-container { display: flex; align-items: center; gap: 10px; }
-        .wallet-address { font-family: monospace; font-size: 14px; color: #00ff88; flex: 1; cursor: pointer; word-break: break-all; }
-        .copy-btn { background: rgba(0, 255, 136, 0.2); border: 1px solid #00ff88; color: #00ff88; padding: 6px 12px; border-radius: 6px; cursor: pointer; transition: all 0.3s; font-size: 12px; }
-        .copy-btn:hover { background: #00ff88; color: #000; }
-        
-        /* Buttons */
-        .button { width: 100%; padding: 15px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px; }
-        .button-primary { background: linear-gradient(135deg, #00ff88 0%, #00cc6e 100%); color: #000; }
-        .button-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0, 255, 136, 0.3); }
-        .button-secondary { background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255, 255, 255, 0.2); }
-        .button-secondary:hover { background: rgba(255, 255, 255, 0.15); }
-        
-        /* Modals */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(10px); z-index: 1000; align-items: center; justify-content: center; }
-        .modal-content { background: #1a1a3e; padding: 40px; border-radius: 24px; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto; position: relative; border: 1px solid rgba(255, 255, 255, 0.1); }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .modal-title { font-size: 24px; font-weight: 600; }
-        .close-modal { background: none; border: none; color: #999; font-size: 32px; cursor: pointer; transition: color 0.3s; }
-        .close-modal:hover { color: #fff; }
-        
-        /* Notification */
-        .notification { position: fixed; top: 20px; right: 20px; padding: 16px 24px; border-radius: 8px; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 10px; transform: translateX(400px); transition: transform 0.3s ease; z-index: 10000; }
-        .notification.show { transform: translateX(0); }
-        .notification.success { background: #00ff88; color: #000; }
-        .notification.error { background: #ff6b6b; color: white; }
-        .notification.warning { background: #ffa500; color: #000; }
-        .notification.info { background: #0099ff; color: white; }
-        
-        /* Security Tab */
-        .algorithm-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(0, 255, 136, 0.1); padding: 12px 20px; border-radius: 12px; margin-bottom: 20px; }
-        .badge-icon { width: 20px; height: 20px; background: #00ff88; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #000; font-weight: bold; }
-        .security-status { display: flex; align-items: center; gap: 10px; background: rgba(255, 255, 255, 0.05); padding: 15px 20px; border-radius: 12px; margin-bottom: 20px; font-size: 14px; }
-        .security-icon { font-size: 20px; }
-        
-        /* Founder Badge */
-        .founder-badge { 
-            background: linear-gradient(45deg, #ffd700, #ff6b6b); 
-            color: #000; 
-            padding: 4px 12px; 
-            border-radius: 20px; 
-            font-size: 12px; 
-            font-weight: bold;
+        .login-logo .logo {
+            width: 80px;
+            height: 80px;
+            background: #00ff88;
+            border-radius: 20px;
             display: inline-flex;
             align-items: center;
-            gap: 5px;
+            justify-content: center;
+            font-size: 36px;
+            font-weight: bold;
+            color: #000;
+            margin-bottom: 20px;
         }
         
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.2); opacity: 0.8; } }
-        @keyframes slideIn { from { opacity: 0; transform: translateX(100px); } to { opacity: 1; transform: translateX(0); } }
+        .login-title { font-size: 24px; text-align: center; margin-bottom: 10px; }
+        .login-subtitle { color: #999; text-align: center; margin-bottom: 30px; }
         
-        @media (max-width: 968px) { 
-            .main-content { grid-template-columns: 1fr; } 
+        .input-group { margin-bottom: 20px; }
+        .input-label { display: block; margin-bottom: 8px; color: #999; font-size: 14px; }
+        
+        .input-field {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            font-size: 16px;
+            transition: all 0.3s;
+            /* Disable browser autocomplete */
+            autocomplete: off;
+            -webkit-autocomplete: off;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: #00ff88;
+            background: rgba(255, 255, 255, 0.08);
+        }
+        
+        .password-toggle { position: relative; }
+        
+        .password-toggle-btn {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            font-size: 20px;
+        }
+        
+        /* 6-digit code input style */
+        .code-input-container {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        
+        .code-input {
+            width: 45px;
+            height: 55px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #00ff88;
+            transition: all 0.3s;
+            /* Disable autocomplete */
+            autocomplete: off;
+            -webkit-autocomplete: off;
+        }
+        
+        .code-input:focus {
+            outline: none;
+            border-color: #00ff88;
+            background: rgba(0, 255, 136, 0.1);
+            box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.2);
+        }
+        
+        .code-input:disabled {
+            background: rgba(255, 255, 255, 0.02);
+            border-color: rgba(255, 255, 255, 0.1);
+            color: #666;
+        }
+        
+        .error-message {
+            background: rgba(255, 107, 107, 0.1);
+            border: 1px solid #ff6b6b;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .success-message {
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid #00ff88;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        /* Main App Styles */
+        .app-container {
+            width: 100%;
+            max-width: 1400px;
+            display: none;
+        }
+
+        .main-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo {
+            width: 50px;
+            height: 50px;
+            background: #00ff88;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #000;
+        }
+
+        .wallet-info h1 {
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+
+        .wallet-address-display {
+            font-size: 14px;
+            color: #999;
+            font-family: monospace;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            list-style: none;
+        }
+
+        .nav-link {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background: rgba(0, 255, 136, 0.1);
+            border-color: #00ff88;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 30px;
+        }
+
+        .wallet-section {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 30px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .balance-section {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .balance-label {
+            color: #999;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .balance-amount {
+            font-size: 48px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #00ff88 0%, #00ccff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
+        }
+
+        .balance-usd {
+            color: #666;
+            font-size: 18px;
+        }
+
+        .wallet-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .action-button {
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .action-button:hover {
+            background: rgba(0, 255, 136, 0.1);
+            border-color: #00ff88;
+            transform: translateY(-2px);
+        }
+
+        .action-icon {
+            font-size: 24px;
+        }
+
+        .stats-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00ff88;
+        }
+
+        .recent-activity {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 20px;
+            border-radius: 12px;
+        }
+
+        .activity-header {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #999;
+        }
+
+        .transaction-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .transaction-item {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 15px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .transaction-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .transaction-icon {
+            width: 36px;
+            height: 36px;
+            background: rgba(0, 255, 136, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .transaction-details h4 {
+            font-size: 14px;
+            margin-bottom: 2px;
+        }
+
+        .transaction-address {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .transaction-amount {
+            text-align: right;
+        }
+
+        .amount-positive {
+            color: #00ff88;
+        }
+
+        .amount-negative {
+            color: #ff6b6b;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .security-status {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 25px;
+            border-radius: 16px;
+            text-align: center;
+        }
+
+        .security-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .security-title {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .security-features {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .security-feature {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .feature-enabled {
+            color: #00ff88;
+        }
+
+        .feature-disabled {
+            color: #666;
+        }
+
+        .quick-actions {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 25px;
+            border-radius: 16px;
+        }
+
+        .quick-actions h3 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #999;
+        }
+
+        .quick-action-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .quick-action-btn {
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .quick-action-btn:hover {
+            background: rgba(0, 255, 136, 0.1);
+            border-color: #00ff88;
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Modals */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: #1a1a3e;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .modal-title {
+            font-size: 24px;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            color: #999;
+            font-size: 28px;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .close-modal:hover {
+            color: #fff;
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .button {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .button-primary {
+            background: linear-gradient(135deg, #00ff88 0%, #00cc66 100%);
+            color: #000;
+        }
+
+        .button-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 255, 136, 0.3);
+        }
+
+        .button-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .button-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Notifications */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background: #1a1a3e;
+            border: 1px solid #00ff88;
+            border-radius: 8px;
+            color: #00ff88;
+            display: none;
+            z-index: 2000;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .notification.error {
+            border-color: #ff6b6b;
+            color: #ff6b6b;
+        }
+
+        /* Security Tab Content */
+        .security-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .security-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .security-card h3 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .security-card p {
+            color: #999;
+            font-size: 14px;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-enabled {
+            background: rgba(0, 255, 136, 0.1);
+            color: #00ff88;
+            border: 1px solid rgba(0, 255, 136, 0.3);
+        }
+
+        .status-disabled {
+            background: rgba(255, 107, 107, 0.1);
+            color: #ff6b6b;
+            border: 1px solid rgba(255, 107, 107, 0.3);
+        }
+
+        /* Google Authenticator Setup */
+        .two-factor-setup {
+            text-align: center;
+        }
+
+        .qr-code-2fa {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            display: inline-block;
+            margin: 20px 0;
+        }
+
+        .manual-code {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 18px;
+            letter-spacing: 2px;
+            color: #00ff88;
+            margin: 20px 0;
+            word-break: break-all;
+        }
+
+        /* Wallet Connect Buttons */
+        .wallet-connect-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 16px;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .wallet-connect-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateX(5px);
+        }
+
+        /* Import Wallet Special Styles */
+        .import-section {
+            margin-bottom: 30px;
+        }
+
+        .import-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .import-tab {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-bottom: 2px solid transparent;
+        }
+
+        .import-tab.active {
+            color: #00ff88;
+            border-bottom-color: #00ff88;
+        }
+
+        .divider {
+            text-align: center;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .divider span {
+            background: #1a1a3e;
+            padding: 0 15px;
+            position: relative;
+            color: #666;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.8; }
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(100px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @media (max-width: 968px) {
+            .main-content { grid-template-columns: 1fr; }
             .main-header { flex-direction: column; gap: 20px; }
             .nav-links { flex-wrap: wrap; justify-content: center; }
         }
-        @media (max-width: 768px) { 
-            .stats-section { grid-template-columns: 1fr; } 
-            .wallet-section { padding: 24px; } 
+
+        @media (max-width: 768px) {
+            .stats-section { grid-template-columns: 1fr; }
+            .wallet-section { padding: 24px; }
             .balance-amount { font-size: 36px; }
+            .transaction-item { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .transaction-amount { align-self: flex-end; }
+            .security-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -143,12 +774,16 @@
         
         <div class="error-message" id="loginError"></div>
         <div class="success-message" id="loginSuccess"></div>
-        
+
         <div id="loginForm">
             <div class="input-group">
                 <label class="input-label">Wallet Password</label>
                 <div class="password-toggle">
-                    <input type="password" class="input-field" id="walletPassword" placeholder="Enter your secure password">
+                    <input type="password" class="input-field" id="walletPassword" 
+                           placeholder="Enter your secure password" 
+                           autocomplete="off"
+                           data-lpignore="true"
+                           data-form-type="other">
                     <button class="password-toggle-btn" onclick="togglePassword('walletPassword')">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
@@ -158,8 +793,15 @@
             </div>
             
             <div class="input-group" id="login2FAField" style="display: none;">
-                <label class="input-label">2FA Code</label>
-                <input type="text" class="input-field" id="login2FA" placeholder="000000" maxlength="6" style="text-align: center;">
+                <label class="input-label">Google Authenticator Code</label>
+                <div class="code-input-container" id="loginCodeContainer">
+                    <input type="text" class="code-input" maxlength="1" data-index="0" autocomplete="off">
+                    <input type="text" class="code-input" maxlength="1" data-index="1" autocomplete="off">
+                    <input type="text" class="code-input" maxlength="1" data-index="2" autocomplete="off">
+                    <input type="text" class="code-input" maxlength="1" data-index="3" autocomplete="off">
+                    <input type="text" class="code-input" maxlength="1" data-index="4" autocomplete="off">
+                    <input type="text" class="code-input" maxlength="1" data-index="5" autocomplete="off">
+                </div>
             </div>
             
             <button class="button button-primary" onclick="attemptLogin()">
@@ -182,7 +824,10 @@
             <div class="input-group">
                 <label class="input-label">Create Password (min 8 characters)</label>
                 <div class="password-toggle">
-                    <input type="password" class="input-field" id="newPassword" placeholder="Create a strong password">
+                    <input type="password" class="input-field" id="newPassword" 
+                           placeholder="Create a strong password" 
+                           autocomplete="new-password"
+                           data-lpignore="true">
                     <button class="password-toggle-btn" onclick="togglePassword('newPassword')">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
@@ -194,7 +839,10 @@
             <div class="input-group">
                 <label class="input-label">Confirm Password</label>
                 <div class="password-toggle">
-                    <input type="password" class="input-field" id="confirmPassword" placeholder="Confirm your password">
+                    <input type="password" class="input-field" id="confirmPassword" 
+                           placeholder="Confirm your password" 
+                           autocomplete="new-password"
+                           data-lpignore="true">
                     <button class="password-toggle-btn" onclick="togglePassword('confirmPassword')">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
@@ -215,35 +863,27 @@
         </div>
         
         <div id="importWalletForm" style="display: none;">
-            <!-- Two main import options -->
-            <div style="margin-bottom: 30px;">
-                <button class="button button-secondary" onclick="showAddressImport()" style="width: 100%; margin-bottom: 20px;">
-                    <span>🔑</span>
-                    <span>Import with Address</span>
-                </button>
-                
-                <button class="button button-secondary" onclick="showSeedImport()" style="width: 100%;">
-                    <span>📝</span>
-                    <span>Import with Seed Phrase</span>
-                </button>
-            </div>
-            
-            <!-- Address Import Section (hidden by default) -->
-            <div id="addressImportSection" style="display: none;">
-                <div style="margin-bottom: 20px;">
-                    <p style="color: #999; text-align: center; margin-bottom: 20px;">Import using your wallet address</p>
-                </div>
+            <div style="margin-bottom: 20px;">
+                <p style="color: #999; text-align: center; margin-bottom: 20px;">Import your founder wallet</p>
                 
                 <div class="input-group">
                     <label class="input-label">Wallet Address</label>
-                    <input type="text" class="input-field" id="importAddress" placeholder="QRC...">
+                    <input type="text" class="input-field" id="importAddress" 
+                           placeholder="QRC..." 
+                           autocomplete="off"
+                           data-lpignore="true"
+                           data-form-type="other">
                 </div>
                 
                 <div class="input-group">
                     <label class="input-label">Password</label>
                     <div class="password-toggle">
-                        <input type="password" class="input-field" id="importAddressPassword" placeholder="Enter your password">
-                        <button class="password-toggle-btn" onclick="togglePassword('importAddressPassword')">
+                        <input type="password" class="input-field" id="importPassword" 
+                               placeholder="Enter your password" 
+                               autocomplete="off"
+                               data-lpignore="true"
+                               data-form-type="other">
+                        <button class="password-toggle-btn" onclick="togglePassword('importPassword')">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
                             </svg>
@@ -251,412 +891,566 @@
                     </div>
                 </div>
                 
-                <button class="button button-primary" onclick="importWithAddress()">
-                    <span>🔐</span>
+                <div class="input-group" id="import2FAField">
+                    <label class="input-label">Google Authenticator Code</label>
+                    <div class="code-input-container" id="importCodeContainer">
+                        <input type="text" class="code-input" maxlength="1" data-index="0" autocomplete="off">
+                        <input type="text" class="code-input" maxlength="1" data-index="1" autocomplete="off">
+                        <input type="text" class="code-input" maxlength="1" data-index="2" autocomplete="off">
+                        <input type="text" class="code-input" maxlength="1" data-index="3" autocomplete="off">
+                        <input type="text" class="code-input" maxlength="1" data-index="4" autocomplete="off">
+                        <input type="text" class="code-input" maxlength="1" data-index="5" autocomplete="off">
+                    </div>
+                </div>
+                
+                <button class="button button-primary" onclick="importWallet()">
+                    <span>🔓</span>
                     <span>Import Wallet</span>
                 </button>
-                
-                <button class="button button-secondary" onclick="backToImportChoice()" style="margin-top: 10px;">
-                    <span>←</span>
-                    <span>Back</span>
-                </button>
             </div>
             
-            <!-- Seed Phrase Import Section (hidden by default) -->
-            <div id="seedImportSection" style="display: none;">
-                <div style="margin-bottom: 20px;">
-                    <p style="color: #999; text-align: center; margin-bottom: 20px;">Enter your 24-word recovery phrase</p>
-                    <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
-                        <button class="action-btn" onclick="pasteSeedPhrase()" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: white; padding: 8px 16px; border-radius: 8px; cursor: pointer;">📋 Paste</button>
-                    </div>
-                </div>
-                
-                <!-- 24 seed phrase inputs -->
-                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px;">
-                    <div style="display: flex; align-items: center; gap: 5px;">
-                        <span style="color: #666; font-size: 12px; width: 20px;">1.</span>
-                        <input type="text" class="seed-input" id="seed1" onkeyup="moveToNext(event, 1)" style="width: 100%; padding: 10px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: white; font-size: 14px;">
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 5px;">
-                        <span style="color: #666; font-size: 12px; width: 20px;">2.</span>
-                        <input type="text" class="seed-input" id="seed2" onkeyup="moveToNext(event, 2)" style="width: 100%; padding: 10px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: white; font-size: 14px;">
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 5px;">
-                        <span style="color: #666; font-size: 12px; width: 20px;">3.</span>
-                        <input type="text" class="seed-input" id="seed3" onkeyup="moveToNext(event, 3)" style="width: 100%; padding: 10px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: white; font-size: 14px;">
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 5px;">
-                        <span style="color: #666; font-size: 12px; width: 20px;">4.</span>
-                        <input type="text" class="seed-input" id="seed4" onkeyup="moveToNext(event, 4)" style="width: 100%; padding: 10px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: white; font-size: 14px;">
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 5px;">
-                        <span style="color: #666; font-size: 12px; width: 20px;">5.</span>
-                        <input type="text" class="seed-input" id="seed5" onkeyup="moveToNext(event, 5)" style="width: 100%; padding: 10px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: white; font-size: 14px;">
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 5px;">
-                        <span style="color: #666; font-size: 12px; width: 20px;">6.</span>
-                        <input type="text" class="seed-input" id="seed6" onkeyup="moveToNext(event, 6)" style="width: 100%; padding: 10px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: white; font-size: 14px;">
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 5px;">
-                        <span style="color: #666; font-size: 12px; width: 20px;">7.</span>
-                        <input type="text" class="seed-input" id="seed7" onkeyup="moveToNext(event, 7)" style="width: 100%; padding: 10px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: white; font-size: 14px;">
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 5px;">
-                        <span style="color: #666; font-size: 12px; width: 20px;">8.</span>
-                        <input type="text" class="seed-input" id="seed8" onkeyup="moveToNext(event, 8)" style="width: 100%; padding: 10px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: white; font-size: 14px;">
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 5px;">
-                        <span style="color: #666; font-size: 12px; width: 20px;">9.</span>
-                        <input type="text" class="seed-input" id="seed9" onkeyup="moveToNext(event, 9)" style="width: 100%; padding: 10px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: white; font-size: 14px;">
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 5px;">
-                        <span style="color: #666; font-size: 12px; width: 20px;">10.</span>
-                        <input type="text" class="seed-input" id="seed10" onkeyup="moveToNext(event, 10)" style="width: 100%; padding: 10px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: white; font-size: 14px;">
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 5px;">
-                        <span style="color: #666; font-size: 12px; width: 20px;">11.</span>
-                        <input type="text" class="seed-input" id="seed11" onkeyup="moveToNext(event, 11)" style="width: 100%; padding: 10px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: white; font-size: 14px;">
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 5px;">
-                        <span style="color: #666; font-size: 12px; width: 20px;">12.</span>
-                        <input type="text" class="seed-input" id="seed12" onkeyup="moveToNext(event, 12)" style="width: 100%; padding: 10px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: white; font-size: 14px;">
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 5px;">
-                        <span style="color: #666; font-size: 12px; width: 20px;">13.</span>
-                        <input type="text" class="seed-input" id="seed13" onkeyup="moveToNext(event, 13)" style="width: 100%; padding: 10px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: white; font-size: 14px;">
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 5px;">
-                        <span style="color: #666; font-size: 12px; width: 20px;">14.</span>
-                        <input type="text" class="seed-input" id="seed14" onkeyup="moveToNext(event, 14)" style="width: 100%; padding: 10px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: white; font-size: 14px;">
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 5px;">
-                        <span style="color: #666; font-size: 12px; width: 20px;">15.</span>
-                        <input type="text" class="seed-input" id="seed15" onkeyup="moveToNext(event, 15)" style="width: 100%; padding: 10px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: white; font-size: 14px;">
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 5px;">
-                        <span style="color: #666; font-size: 12px; width: 20px;">16.</span>
-                        <input type="text" class="seed-input" id="seed16" onkeyup="moveToNext(event, 16)" style="width: 100%; padding: 10px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: white; font-size: 14px;">
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 5px;">
-                        <span style="color: #666; font-size: 12px; width: 20px;">17.</span>
-                        <input type="text" class="seed-input" id="seed17" onkeyup="moveToNext(event, 17)" style="width: 100%; padding: 10px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: white; font-size: 14px;">
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 5px;">
-                        <span style="color: #666; font-size: 12px; width: 20px;">18.</span>
-                        <input type="text" class="seed-input" id="seed18" onkeyup="moveToNext(event, 18)" style="width: 100%; padding: 10px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: white; font-size: 14px;">
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 5px;">
-                        <span style="color: #666; font-size: 12px; width: 20px;">19.</span>
-                        <input type="text" class="seed-input" id="seed19" onkeyup="moveToNext(event, 19)" style="width: 100%; padding: 10px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: white; font-size: 14px;">
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 5px;">
-                        <span style="color: #666; font-size: 12px; width: 20px;">20.</span>
-                        <input type="text" class="seed-input" id="seed20" onkeyup="moveToNext(event, 20)" style="width: 100%; padding: 10px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: white; font-size: 14px;">
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 5px;">
-                        <span style="color: #666; font-size: 12px; width: 20px;">21.</span>
-                        <input type="text" class="seed-input" id="seed21" onkeyup="moveToNext(event, 21)" style="width: 100%; padding: 10px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: white; font-size: 14px;">
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 5px;">
-                        <span style="color: #666; font-size: 12px; width: 20px;">22.</span>
-                        <input type="text" class="seed-input" id="seed22" onkeyup="moveToNext(event, 22)" style="width: 100%; padding: 10px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: white; font-size: 14px;">
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 5px;">
-                        <span style="color: #666; font-size: 12px; width: 20px;">23.</span>
-                        <input type="text" class="seed-input" id="seed23" onkeyup="moveToNext(event, 23)" style="width: 100%; padding: 10px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: white; font-size: 14px;">
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 5px;">
-                        <span style="color: #666; font-size: 12px; width: 20px;">24.</span>
-                        <input type="text" class="seed-input" id="seed24" onkeyup="moveToNext(event, 24)" style="width: 100%; padding: 10px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: white; font-size: 14px;">
-                    </div>
-                </div>
-                
-                <!-- Note about seed phrase -->
-                <div style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                    <p style="font-size: 12px; color: #999; margin: 0;">
-                        ℹ️ If you have your seed phrase, you already have access to your wallet. No password needed - your seed phrase IS your key.
-                    </p>
-                </div>
-                
-                <button class="button button-primary" onclick="importExistingWallet()">
-                    <span>📥</span>
-                    <span>Import with Seed Phrase</span>
-                </button>
-                
-                <button class="button button-secondary" onclick="backToImportChoice()" style="margin-top: 10px;">
-                    <span>←</span>
-                    <span>Back</span>
-                </button>
-            </div>
-            
-            <!-- Back to main login -->
-            <button class="button button-secondary" onclick="backToLogin()" style="margin-top: 20px;">
+            <button class="button button-secondary" onclick="backToLogin()">
                 <span>←</span>
                 <span>Back to Login</span>
             </button>
         </div>
     </div>
 
-    <!-- Main App Container -->
+    <!-- Main App -->
     <div class="app-container" id="appContainer">
         <header class="main-header">
             <div class="logo-section">
                 <div class="logo">QRC</div>
-                <div class="logo-text">Quantum Wallet</div>
+                <div class="wallet-info">
+                    <h1>Quantum Wallet</h1>
+                    <div class="wallet-address-display" id="walletAddress">Loading...</div>
+                </div>
             </div>
             
-            <nav class="nav-links">
-                <a href="#" class="nav-link" onclick="showTab('wallet'); return false;">Wallet</a>
-                <a href="#" class="nav-link" onclick="showTab('send'); return false;">Send</a>
-                <a href="#" class="nav-link" onclick="showTab('receive'); return false;">Receive</a>
-                <a href="#" class="nav-link" onclick="showTab('activity'); return false;">Activity</a>
-                <a href="#" class="nav-link" onclick="showTab('security'); return false;">Security</a>
+            <nav>
+                <ul class="nav-links">
+                    <li class="nav-link active" onclick="showTab('wallet')" data-tab="wallet">💰 Wallet</li>
+                    <li class="nav-link" onclick="showTab('send')" data-tab="send">📤 Send</li>
+                    <li class="nav-link" onclick="showTab('receive')" data-tab="receive">📥 Receive</li>
+                    <li class="nav-link" onclick="showTab('activity')" data-tab="activity">📊 Activity</li>
+                    <li class="nav-link" onclick="showTab('security')" data-tab="security">🔒 Security</li>
+                    <li class="nav-link" onclick="showTab('settings')" data-tab="settings">⚙️ Settings</li>
+                    <li class="nav-link" onclick="logout()" style="background: rgba(255, 107, 107, 0.1); border-color: rgba(255, 107, 107, 0.3);">🚪 Logout</li>
+                </ul>
             </nav>
-            
-            <div class="user-menu">
-                <div class="network-indicator">
-                    <div class="network-dot"></div>
-                    <span>Mainnet</span>
-                </div>
-                <div class="user-info">
-                    <div class="user-avatar" id="userAvatar">U</div>
-                    <span id="userDisplay">User</span>
-                    <div id="founderBadgeHeader" style="display: none;">
-                        <span class="founder-badge">👑 FOUNDER</span>
-                    </div>
-                </div>
-                <button class="logout-btn" onclick="logout()">Logout</button>
-            </div>
         </header>
 
         <div class="main-content">
-            <div class="stats-section">
-                <div class="stat-card">
-                    <div class="stat-value" id="currentTPS">0</div>
-                    <div class="stat-label">Current TPS</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="totalBlocks">0</div>
-                    <div class="stat-label">Total Blocks</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="totalTransactions">0</div>
-                    <div class="stat-label">Transactions</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="activeUsers">0</div>
-                    <div class="stat-label">Active Users</div>
+            <!-- Wallet Tab -->
+            <div class="tab-content active" id="walletTab">
+                <div class="wallet-section">
+                    <div class="balance-section">
+                        <div class="balance-label">Total Balance</div>
+                        <div class="balance-amount" id="balance">0.00 QRC</div>
+                        <div class="balance-usd">≈ $0.00 USD</div>
+                    </div>
+                    
+                    <div class="wallet-actions">
+                        <button class="action-button" onclick="showTab('send')">
+                            <span class="action-icon">📤</span>
+                            <span>Send</span>
+                        </button>
+                        <button class="action-button" onclick="showTab('receive')">
+                            <span class="action-icon">📥</span>
+                            <span>Receive</span>
+                        </button>
+                    </div>
+                    
+                    <div class="stats-section">
+                        <div class="stat-card">
+                            <div class="stat-label">Network TPS</div>
+                            <div class="stat-value" id="tps">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Block Height</div>
+                            <div class="stat-value" id="blocks">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Total Transactions</div>
+                            <div class="stat-value" id="transactions">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Active Users</div>
+                            <div class="stat-value" id="users">0</div>
+                        </div>
+                    </div>
+                    
+                    <div class="recent-activity">
+                        <h3 class="activity-header">Recent Activity</h3>
+                        <div class="transaction-list" id="recentTransactions">
+                            <p style="color: #666; text-align: center;">No transactions yet</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="wallet-section">
-                <div class="wallet-header">
-                    <h2 class="wallet-title">Quantum Resistant Wallet</h2>
-                    <div id="founderBadgeWallet" style="display: none;">
-                        <span class="founder-badge">👑 FOUNDER</span>
+            <!-- Security Tab -->
+            <div class="tab-content" id="securityTab">
+                <div class="wallet-section">
+                    <h2 style="margin-bottom: 30px;">🔒 Security Settings</h2>
+                    
+                    <div class="security-grid">
+                        <div class="security-card">
+                            <h3>
+                                <span>🔐</span>
+                                <span>Google Authenticator</span>
+                            </h3>
+                            <p>Add an extra layer of security with Google Authenticator app</p>
+                            <div style="margin-bottom: 15px;">
+                                <span class="status-indicator status-disabled" id="twoFactorStatus">
+                                    <span>●</span>
+                                    <span>Disabled</span>
+                                </span>
+                            </div>
+                            <button class="button button-secondary" onclick="showTwoFactorModal()">
+                                Setup Google Authenticator
+                            </button>
+                        </div>
+                        
+                        <div class="security-card">
+                            <h3>
+                                <span>🔑</span>
+                                <span>Change Password</span>
+                            </h3>
+                            <p>Regularly update your password to maintain security</p>
+                            <button class="button button-secondary" onclick="showChangePasswordModal()">
+                                Change Password
+                            </button>
+                        </div>
+                        
+                        <div class="security-card">
+                            <h3>
+                                <span>📝</span>
+                                <span>Backup Seed Phrase</span>
+                            </h3>
+                            <p>View and backup your 24-word recovery phrase</p>
+                            <button class="button button-secondary" onclick="showSeedPhraseModal()">
+                                View Seed Phrase
+                            </button>
+                        </div>
+                        
+                        <div class="security-card">
+                            <h3>
+                                <span>🔒</span>
+                                <span>Export Private Key</span>
+                            </h3>
+                            <p>Export your private key for external use</p>
+                            <button class="button button-secondary" onclick="showExportPrivateKeyModal()">
+                                Export Private Key
+                            </button>
+                        </div>
                     </div>
                 </div>
-                
+            </div>
+            
+            <div class="sidebar">
                 <div class="security-status">
-                    <span class="security-icon">🔒</span>
-                    <span id="securityStatusText">Secured with password + encryption</span>
-                </div>
-                
-                <div class="algorithm-badge">
-                    <div class="badge-icon">✓</div>
-                    <span>Protected by CRYSTALS-Dilithium</span>
-                </div>
-                
-                <div class="wallet-display">
-                    <div class="wallet-label">Your Wallet Address</div>
-                    <div class="wallet-address-container">
-                        <div class="wallet-address" id="walletAddress" onclick="copyAddress()"></div>
-                        <button class="copy-btn" onclick="copyAddress()">Copy</button>
+                    <div class="security-icon">🛡️</div>
+                    <h3 class="security-title">Security Status</h3>
+                    <p style="color: #999; font-size: 14px;" id="securityStatusText">Your wallet is protected</p>
+                    
+                    <div class="security-features">
+                        <div class="security-feature feature-enabled">
+                            <span>✓</span>
+                            <span>Password Protection</span>
+                        </div>
+                        <div class="security-feature feature-disabled" id="twoFactorFeature">
+                            <span>○</span>
+                            <span>Google Authenticator</span>
+                        </div>
+                        <div class="security-feature feature-enabled">
+                            <span>✓</span>
+                            <span>Encrypted Storage</span>
+                        </div>
+                        <div class="security-feature feature-enabled">
+                            <span>✓</span>
+                            <span>Quantum Resistant</span>
+                        </div>
                     </div>
                 </div>
                 
-                <div class="balance-section">
-                    <div class="balance-label">Total Balance</div>
-                    <div class="balance-amount" id="balanceAmount">0.00 QRC</div>
-                    <div class="balance-usd" id="balanceUSD">≈ $0.00 USD</div>
-                </div>
-                
-                <div class="wallet-actions">
-                    <button class="action-btn" onclick="showSendModal()">Send QRC</button>
-                    <button class="action-btn" onclick="showReceiveModal()">Receive</button>
-                    <button class="action-btn" onclick="updateBalance()">Refresh</button>
+                <div class="quick-actions">
+                    <h3>Quick Actions</h3>
+                    <div class="quick-action-list">
+                        <button class="quick-action-btn" onclick="showQRCode()">
+                            <span>📱</span>
+                            <span>Show QR Code</span>
+                        </button>
+                        <button class="quick-action-btn" onclick="copyAddress()">
+                            <span>📋</span>
+                            <span>Copy Address</span>
+                        </button>
+                        <button class="quick-action-btn" onclick="refreshWallet()">
+                            <span>🔄</span>
+                            <span>Refresh Balance</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Notification Container -->
-    <div id="notification" class="notification"></div>
+    <!-- Modals -->
+    <!-- Google Authenticator Setup Modal -->
+    <div class="modal" id="twoFactorModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">🔐 Setup Google Authenticator</h2>
+                <button class="close-modal" onclick="closeModal('twoFactorModal')">×</button>
+            </div>
+            <div class="two-factor-setup">
+                <p>Scan this QR code with Google Authenticator app:</p>
+                <div class="qr-code-2fa" id="qrCodeContainer">
+                    <!-- QR Code will be generated here -->
+                </div>
+                <p>Or enter this code manually:</p>
+                <div class="manual-code" id="manualCode">
+                    <!-- Manual code will be displayed here -->
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Enter 6-digit code from Google Authenticator:</label>
+                    <div class="code-input-container" id="verify2FAContainer">
+                        <input type="text" class="code-input" maxlength="1" data-index="0" autocomplete="off">
+                        <input type="text" class="code-input" maxlength="1" data-index="1" autocomplete="off">
+                        <input type="text" class="code-input" maxlength="1" data-index="2" autocomplete="off">
+                        <input type="text" class="code-input" maxlength="1" data-index="3" autocomplete="off">
+                        <input type="text" class="code-input" maxlength="1" data-index="4" autocomplete="off">
+                        <input type="text" class="code-input" maxlength="1" data-index="5" autocomplete="off">
+                    </div>
+                </div>
+                <button class="button button-primary" onclick="verify2FA()">Verify & Enable Google Authenticator</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div class="modal" id="changePasswordModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">🔒 Change Password</h2>
+                <button class="close-modal" onclick="closeModal('changePasswordModal')">×</button>
+            </div>
+            <div class="input-group">
+                <label class="input-label">Current Password:</label>
+                <div class="password-toggle">
+                    <input type="password" class="input-field" id="currentPassword" 
+                           placeholder="Enter current password" 
+                           autocomplete="off"
+                           data-lpignore="true">
+                    <button class="password-toggle-btn" onclick="togglePassword('currentPassword')">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="input-group">
+                <label class="input-label">New Password:</label>
+                <div class="password-toggle">
+                    <input type="password" class="input-field" id="newPasswordChange" 
+                           placeholder="Enter new password" 
+                           autocomplete="new-password"
+                           data-lpignore="true">
+                    <button class="password-toggle-btn" onclick="togglePassword('newPasswordChange')">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="input-group">
+                <label class="input-label">Confirm New Password:</label>
+                <div class="password-toggle">
+                    <input type="password" class="input-field" id="confirmPasswordChange" 
+                           placeholder="Confirm new password" 
+                           autocomplete="new-password"
+                           data-lpignore="true">
+                    <button class="password-toggle-btn" onclick="togglePassword('confirmPasswordChange')">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="input-group" id="passwordChange2FAField" style="display: none;">
+                <label class="input-label">Google Authenticator Code (required):</label>
+                <div class="code-input-container" id="changePasswordCodeContainer">
+                    <input type="text" class="code-input" maxlength="1" data-index="0" autocomplete="off">
+                    <input type="text" class="code-input" maxlength="1" data-index="1" autocomplete="off">
+                    <input type="text" class="code-input" maxlength="1" data-index="2" autocomplete="off">
+                    <input type="text" class="code-input" maxlength="1" data-index="3" autocomplete="off">
+                    <input type="text" class="code-input" maxlength="1" data-index="4" autocomplete="off">
+                    <input type="text" class="code-input" maxlength="1" data-index="5" autocomplete="off">
+                </div>
+            </div>
+            <button class="button button-primary" onclick="changePassword()">Change Password</button>
+        </div>
+    </div>
+
+    <div class="notification" id="notification"></div>
 
     <script>
-        // Configuration
-        const FOUNDER_WALLETS = [
-            'QRC7K9mN3pX2vB8nQ4jL6wR5tY1aZ9fH3kE-A7F2',
-            // Add more founder wallets here
-        ];
+        // Initialize 6-digit code inputs
+        function initializeCodeInputs() {
+            const containers = document.querySelectorAll('.code-input-container');
+            
+            containers.forEach(container => {
+                const inputs = container.querySelectorAll('.code-input');
+                
+                inputs.forEach((input, index) => {
+                    // Disable autocomplete on each input
+                    input.setAttribute('autocomplete', 'off');
+                    input.setAttribute('data-lpignore', 'true');
+                    input.setAttribute('data-form-type', 'other');
+                    
+                    input.addEventListener('input', (e) => {
+                        const value = e.target.value;
+                        
+                        if (value.length === 1) {
+                            // Move to next input
+                            if (index < inputs.length - 1) {
+                                inputs[index + 1].focus();
+                            } else {
+                                // All digits entered, trigger submit
+                                const code = Array.from(inputs).map(i => i.value).join('');
+                                if (code.length === 6) {
+                                    handleCodeComplete(container.id, code);
+                                }
+                            }
+                        }
+                    });
+                    
+                    input.addEventListener('keydown', (e) => {
+                        if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                            inputs[index - 1].focus();
+                        }
+                    });
+                    
+                    // Handle paste
+                    input.addEventListener('paste', (e) => {
+                        e.preventDefault();
+                        const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+                        
+                        for (let i = 0; i < pastedData.length && i < inputs.length; i++) {
+                            inputs[i].value = pastedData[i];
+                        }
+                        
+                        if (pastedData.length === 6) {
+                            handleCodeComplete(container.id, pastedData);
+                        }
+                    });
+                });
+            });
+        }
+        
+        function handleCodeComplete(containerId, code) {
+            // Handle different containers
+            if (containerId === 'loginCodeContainer') {
+                document.getElementById('login2FA').value = code;
+            } else if (containerId === 'importCodeContainer') {
+                document.getElementById('import2FA').value = code;
+            } else if (containerId === 'verify2FAContainer') {
+                document.getElementById('twoFactorCode').value = code;
+            } else if (containerId === 'changePasswordCodeContainer') {
+                document.getElementById('passwordChange2FA').value = code;
+            }
+        }
+        
+        function getCodeFromContainer(containerId) {
+            const container = document.getElementById(containerId);
+            const inputs = container.querySelectorAll('.code-input');
+            return Array.from(inputs).map(i => i.value).join('');
+        }
+        
+        function clearCodeContainer(containerId) {
+            const container = document.getElementById(containerId);
+            const inputs = container.querySelectorAll('.code-input');
+            inputs.forEach(input => {
+                input.value = '';
+            });
+            inputs[0].focus();
+        }
 
-        // State
+        // Global state
         let walletState = {
             address: null,
-            balance: 0,
             seedPhrase: null,
+            balance: 0,
+            encryptedData: null,
             isLoggedIn: false,
             transactions: [],
+            twoFactorSecret: null,
             twoFactorEnabled: false,
-            twoFactorSecret: null
+            backupCodes: []
         };
         
-        let sessionPassword = '';
-        let loginMode = 'password'; // 'password', 'address', 'seedphrase'
-        let currentLoginAddress = null;
-        let require2FA = false;
+        let sessionPassword = null;
+        let updateInterval = null;
+        
+        const API_BASE = window.location.hostname === 'localhost' 
+            ? 'http://localhost:5000/api'
+            : '/api';
 
-        // Word list for seed phrases
-        const wordList = ['abandon', 'ability', 'able', 'about', 'above', 'absent', 'absorb', 'abstract', 'absurd', 'abuse', 'access', 'accident', 'account', 'accuse', 'achieve', 'acid', 'acoustic', 'acquire', 'across', 'act', 'action', 'actor', 'actress', 'actual'];
-
-        // Helper Functions
+        // Utility functions
         function showError(message) {
-            document.getElementById('loginError').textContent = message;
-            document.getElementById('loginError').style.display = 'block';
-            setTimeout(() => {
-                document.getElementById('loginError').style.display = 'none';
-            }, 5000);
+            const errorDiv = document.getElementById('loginError');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => errorDiv.style.display = 'none', 5000);
         }
-
+        
         function showSuccess(message) {
-            document.getElementById('loginSuccess').textContent = message;
-            document.getElementById('loginSuccess').style.display = 'block';
-            setTimeout(() => {
-                document.getElementById('loginSuccess').style.display = 'none';
-            }, 5000);
+            const successDiv = document.getElementById('loginSuccess');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            setTimeout(() => successDiv.style.display = 'none', 5000);
         }
-
-        function showNotification(message, type = 'info') {
+        
+        function showNotification(message, type = 'success') {
             const notification = document.getElementById('notification');
-            notification.className = `notification ${type} show`;
             notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.style.display = 'block';
             
             setTimeout(() => {
-                notification.classList.remove('show');
+                notification.style.display = 'none';
             }, 3000);
         }
-
-        function togglePassword(inputId) {
-            const input = document.getElementById(inputId);
-            input.type = input.type === 'password' ? 'text' : 'password';
+        
+        function togglePassword(fieldId) {
+            const field = document.getElementById(fieldId);
+            field.type = field.type === 'password' ? 'text' : 'password';
         }
-
-        // New UI Functions
-        function showAddressImport() {
-            // Hide the choice buttons
-            document.querySelectorAll('#importWalletForm > div')[0].style.display = 'none';
-            // Show address import section
-            document.getElementById('addressImportSection').style.display = 'block';
-            document.getElementById('seedImportSection').style.display = 'none';
+        
+        // Login functions
+        function showCreateNewWallet() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('createWalletForm').style.display = 'block';
+            document.getElementById('importWalletForm').style.display = 'none';
         }
-
-        function showSeedImport() {
-            // Hide the choice buttons
-            document.querySelectorAll('#importWalletForm > div')[0].style.display = 'none';
-            // Show seed import section
-            document.getElementById('addressImportSection').style.display = 'none';
-            document.getElementById('seedImportSection').style.display = 'block';
-        }
-
-        function backToImportChoice() {
-            // Show the choice buttons
-            document.querySelectorAll('#importWalletForm > div')[0].style.display = 'block';
-            // Hide both import sections
-            document.getElementById('addressImportSection').style.display = 'none';
-            document.getElementById('seedImportSection').style.display = 'none';
-            // Clear inputs
-            document.getElementById('importAddress').value = '';
-            document.getElementById('importAddressPassword').value = '';
-            for (let i = 1; i <= 24; i++) {
-                const input = document.getElementById(`seed${i}`);
-                if (input) input.value = '';
-            }
-        }
-
-        // Login Functions with Address Support
-        function attemptLogin() {
-            const password = document.getElementById('walletPassword').value;
-            const twoFACode = document.getElementById('login2FA').value;
+        
+        function showImportWallet() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('createWalletForm').style.display = 'none';
+            document.getElementById('importWalletForm').style.display = 'block';
             
-            // Check if there's an address-based login stored
-            const addressLogin = localStorage.getItem('qrcAddressLogin');
-            if (addressLogin) {
-                const loginData = JSON.parse(addressLogin);
-                currentLoginAddress = loginData.address;
-                loginMode = 'address';
-                
-                // Check if it's a founder wallet
-                if (FOUNDER_WALLETS.includes(currentLoginAddress)) {
-                    require2FA = true;
-                    document.getElementById('login2FAField').style.display = 'block';
-                    
-                    if (!twoFACode) {
-                        showError('2FA code required for founder wallet');
-                        return;
-                    }
-                }
-                
-                // Perform address-based login
-                loginWithAddress(currentLoginAddress, password, twoFACode);
-                return;
-            }
+            // Clear code inputs
+            clearCodeContainer('importCodeContainer');
+        }
+        
+        function backToLogin() {
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('createWalletForm').style.display = 'none';
+            document.getElementById('importWalletForm').style.display = 'none';
+        }
+        
+        async function attemptLogin() {
+            const password = document.getElementById('walletPassword').value;
+            const twoFactorCode = getCodeFromContainer('loginCodeContainer');
             
             if (!password) {
                 showError('Please enter your password');
                 return;
             }
             
-            // Original password-only login
+            const encryptedWallet = localStorage.getItem('qrcWalletEncrypted');
+            
+            if (!encryptedWallet) {
+                showError('No wallet found. Please create a new wallet.');
+                return;
+            }
+            
             try {
-                const encrypted = localStorage.getItem('qrcWalletEncrypted');
-                if (!encrypted) {
-                    showError('No wallet found. Please create a new wallet or import one.');
+                // Decrypt wallet data
+                const decrypted = CryptoJS.AES.decrypt(encryptedWallet, password);
+                const decryptedStr = decrypted.toString(CryptoJS.enc.Utf8);
+                
+                if (!decryptedStr) {
+                    showError('Invalid password');
                     return;
                 }
                 
-                const decrypted = CryptoJS.AES.decrypt(encrypted, password).toString(CryptoJS.enc.Utf8);
-                walletState = JSON.parse(decrypted);
+                walletState = JSON.parse(decryptedStr);
                 
-                sessionPassword = password;
+                // Check if Google Authenticator is enabled
+                if (walletState.twoFactorEnabled) {
+                    if (!document.getElementById('login2FAField').style.display || document.getElementById('login2FAField').style.display === 'none') {
+                        document.getElementById('login2FAField').style.display = 'block';
+                        showError('Please enter your Google Authenticator code');
+                        clearCodeContainer('loginCodeContainer');
+                        return;
+                    }
+                    
+                    if (!twoFactorCode) {
+                        showError('Please enter your Google Authenticator code');
+                        return;
+                    }
+                    
+                    if (!verifyTOTP(walletState.twoFactorSecret, twoFactorCode)) {
+                        showError('Invalid Google Authenticator code');
+                        clearCodeContainer('loginCodeContainer');
+                        return;
+                    }
+                }
+                
                 walletState.isLoggedIn = true;
-                showWalletInterface();
-                showSuccess('Wallet unlocked successfully');
+                sessionPassword = password;
+                
+                // Show main app
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('appContainer').style.display = 'block';
+                
+                // Initialize app
+                initializeApp();
+                showNotification('Welcome back!', 'success');
+                
             } catch (error) {
-                showError('Invalid password or corrupted wallet data');
+                console.error('Login error:', error);
+                showError('Failed to decrypt wallet. Please check your password.');
             }
         }
-
-        // New function for address-based login with secure API
-        async function loginWithAddress(address, password, twoFACode) {
+        
+        async function importWallet() {
+            const address = document.getElementById('importAddress').value.trim();
+            const password = document.getElementById('importPassword').value;
+            const twoFactorCode = getCodeFromContainer('importCodeContainer');
+            
+            if (!address || !password || !twoFactorCode) {
+                showError('Please fill in all fields');
+                return;
+            }
+            
             try {
-                // First, check if it's a founder wallet
-                const checkResponse = await fetch('/api/auth/check-wallet', {
+                showSuccess('Checking wallet...');
+                
+                // Check if founder wallet
+                const checkResponse = await fetch(`${API_BASE}/auth/check-wallet`, {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ address })
                 });
                 
                 const checkData = await checkResponse.json();
                 
                 if (!checkData.success) {
-                    showError('Failed to verify wallet type');
+                    showError('Invalid wallet address');
                     return;
                 }
                 
-                // Step 1: Verify password
-                const passwordResponse = await fetch('/api/auth/verify-password', {
+                if (!checkData.is_founder || !checkData.require_2fa) {
+                    showError('This is not a founder wallet or Google Authenticator is not enabled');
+                    return;
+                }
+                
+                // Verify password
+                const passwordResponse = await fetch(`${API_BASE}/auth/verify-password`, {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ address, password })
                 });
                 
@@ -667,71 +1461,69 @@
                     return;
                 }
                 
-                // If 2FA is required
-                if (passwordData.require_2fa) {
-                    if (!twoFACode) {
-                        // Show 2FA field and store temp token
-                        document.getElementById('login2FAField').style.display = 'block';
-                        sessionStorage.setItem('tempToken', passwordData.temp_token);
-                        showSuccess('Password verified. Please enter your 2FA code.');
-                        return;
-                    }
-                    
-                    // Step 2: Verify 2FA
-                    const tempToken = sessionStorage.getItem('tempToken');
-                    const twoFAResponse = await fetch('/api/auth/verify-2fa', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({
-                            temp_token: tempToken,
-                            otp: twoFACode,
-                            device_id: getDeviceId(),
-                            remember_device: false
-                        })
-                    });
-                    
-                    const twoFAData = await twoFAResponse.json();
-                    
-                    if (!twoFAData.success) {
-                        showError(twoFAData.error || 'Invalid 2FA code');
-                        document.getElementById('login2FA').value = '';
-                        return;
-                    }
-                    
-                    // Success - store session and wallet data
-                    sessionStorage.setItem('sessionToken', twoFAData.session_token);
-                    sessionStorage.removeItem('tempToken');
-                    
-                    walletState = {
-                        ...twoFAData.wallet_data,
-                        isLoggedIn: true
-                    };
-                    
-                    sessionPassword = password;
-                    localStorage.removeItem('qrcAddressLogin');
-                    showWalletInterface();
-                    showSuccess('Founder wallet unlocked successfully');
-                    
-                } else {
-                    // Regular wallet - no 2FA required
-                    walletState = {
-                        ...passwordData.wallet_data,
-                        isLoggedIn: true
-                    };
-                    
-                    sessionPassword = password;
-                    localStorage.removeItem('qrcAddressLogin');
-                    showWalletInterface();
-                    showSuccess('Wallet unlocked successfully');
+                // Verify Google Authenticator
+                const tfaResponse = await fetch(`${API_BASE}/auth/verify-2fa`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        temp_token: passwordData.temp_token,
+                        otp: twoFactorCode,
+                        device_id: getDeviceId(),
+                        remember_device: false
+                    })
+                });
+                
+                const tfaData = await tfaResponse.json();
+                
+                if (!tfaData.success) {
+                    showError(tfaData.error || 'Invalid Google Authenticator code');
+                    clearCodeContainer('importCodeContainer');
+                    return;
                 }
                 
+                // Import successful - create local wallet
+                walletState = {
+                    address: tfaData.wallet_data.address,
+                    balance: tfaData.wallet_data.balance,
+                    isFounder: true,
+                    features: tfaData.wallet_data.features,
+                    sessionToken: tfaData.session_token,
+                    twoFactorEnabled: true,
+                    seedPhrase: generateSeedPhrase(), // Generate new seed for local storage
+                    isLoggedIn: true
+                };
+                
+                sessionPassword = password;
+                
+                // Encrypt and save
+                const encrypted = CryptoJS.AES.encrypt(JSON.stringify(walletState), password).toString();
+                localStorage.setItem('qrcWalletEncrypted', encrypted);
+                
+                // Show main app
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('appContainer').style.display = 'block';
+                
+                // Initialize app
+                initializeApp();
+                showNotification('Founder wallet imported successfully!', 'success');
+                
             } catch (error) {
-                showError('Connection error: ' + error.message);
-                console.error('Login error:', error);
+                console.error('Import error:', error);
+                showError('Failed to import wallet. Please check your connection.');
             }
         }
-
-        // Helper function to generate device ID
+        
+        // Additional functions
+        function generateSeedPhrase() {
+            // BIP39 word list (partial for demo - in production use full list)
+            const wordList = ['abandon', 'ability', 'able', 'about', 'above', 'absent', 'absorb', 'abstract', 'absurd', 'abuse', 'access', 'accident', 'account', 'accuse', 'achieve', 'acid', 'acoustic', 'acquire', 'across', 'act'];
+            const words = [];
+            for (let i = 0; i < 24; i++) {
+                words.push(wordList[Math.floor(Math.random() * wordList.length)]);
+            }
+            return words;
+        }
+        
         function getDeviceId() {
             let deviceId = localStorage.getItem('deviceId');
             if (!deviceId) {
@@ -740,275 +1532,433 @@
             }
             return deviceId;
         }
-
-        function showCreateNewWallet() {
-            document.getElementById('loginForm').style.display = 'none';
-            document.getElementById('createWalletForm').style.display = 'block';
-        }
-
-        function showImportWallet() {
-            document.getElementById('loginForm').style.display = 'none';
-            document.getElementById('importWalletForm').style.display = 'block';
-        }
-
-        function backToLogin() {
-            document.getElementById('loginForm').style.display = 'block';
-            document.getElementById('createWalletForm').style.display = 'none';
-            document.getElementById('importWalletForm').style.display = 'none';
-            document.getElementById('addressImportSection').style.display = 'none';
-            document.getElementById('seedImportSection').style.display = 'none';
-            document.getElementById('login2FAField').style.display = 'none';
-            document.getElementById('login2FA').value = '';
-            // Show the choice buttons again
-            if (document.querySelectorAll('#importWalletForm > div')[0]) {
-                document.querySelectorAll('#importWalletForm > div')[0].style.display = 'block';
-            }
-        }
-
-        // Import with address
-        async function importWithAddress() {
-            const address = document.getElementById('importAddress').value;
-            const password = document.getElementById('importAddressPassword').value;
-            
-            if (!address || !password) {
-                showError('Please enter both address and password');
-                return;
-            }
-            
-            // Store address login info
-            localStorage.setItem('qrcAddressLogin', JSON.stringify({
-                address: address,
-                mode: 'address'
-            }));
-            
-            // Go back to login and attempt login
-            backToLogin();
-            document.getElementById('walletPassword').value = password;
-            
-            // Check if founder wallet
-            if (FOUNDER_WALLETS.includes(address)) {
-                document.getElementById('login2FAField').style.display = 'block';
-                showSuccess('Founder wallet detected. Please enter your 2FA code.');
-            } else {
-                attemptLogin();
-            }
-        }
-
-        function createNewWallet() {
+        
+        async function createNewWallet() {
             const password = document.getElementById('newPassword').value;
-            const confirmPass = document.getElementById('confirmPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
             
-            if (password.length < 8) {
+            if (!password || password.length < 8) {
                 showError('Password must be at least 8 characters');
                 return;
             }
             
-            if (password !== confirmPass) {
+            if (password !== confirmPassword) {
                 showError('Passwords do not match');
                 return;
             }
             
-            // Generate seed phrase
-            const seedPhrase = generateSeedPhrase();
-            
-            // Create wallet
-            walletState = {
-                address: 'QRC' + generateRandomString(32),
-                seedPhrase: seedPhrase,
-                balance: 1000,
-                transactions: [],
-                created: Date.now(),
-                twoFactorEnabled: false,
-                twoFactorSecret: null
-            };
-            
-            // Encrypt and save
-            const encrypted = CryptoJS.AES.encrypt(JSON.stringify(walletState), password).toString();
-            localStorage.setItem('qrcWalletEncrypted', encrypted);
-            
-            showSuccess('Wallet created successfully! Please login.');
-            setTimeout(() => {
-                backToLogin();
-                document.getElementById('newPassword').value = '';
-                document.getElementById('confirmPassword').value = '';
-            }, 2000);
-        }
-
-        function importExistingWallet() {
-            // Collect seed phrase from individual inputs
-            const seedWords = [];
-            for (let i = 1; i <= 24; i++) {
-                const word = document.getElementById(`seed${i}`)?.value?.trim()?.toLowerCase();
-                if (!word) {
-                    showError(`Please enter word ${i} of your seed phrase`);
-                    document.getElementById(`seed${i}`).focus();
-                    return;
-                }
-                seedWords.push(word);
-            }
-            
-            // Import wallet with seed phrase only (no password needed)
-            walletState = {
-                address: 'QRC' + generateAddressFromSeed(seedWords.join(' ')),
-                seedPhrase: seedWords,
-                balance: 0,
-                transactions: [],
-                imported: Date.now(),
-                twoFactorEnabled: false,
-                twoFactorSecret: null,
-                isLoggedIn: true
-            };
-            
-            // For seed phrase import, we'll use a temporary session
-            sessionPassword = 'temp_' + Date.now(); // Temporary session password
-            
-            // Note: In a real implementation, the seed phrase would be used to derive keys
-            // and wouldn't need to be stored
-            
-            showWalletInterface();
-            showSuccess('Wallet imported successfully with seed phrase!');
-            
-            // Clear the form
-            backToImportChoice();
-        }
-
-        function showWalletInterface() {
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('appContainer').style.display = 'block';
-            
-            // Update UI
-            document.getElementById('walletAddress').textContent = walletState.address;
-            document.getElementById('userAvatar').textContent = walletState.address.substring(3, 4).toUpperCase();
-            document.getElementById('userDisplay').textContent = walletState.address.substring(0, 8) + '...';
-            
-            // Show founder badge if applicable
-            if (walletState.isFounder || FOUNDER_WALLETS.includes(walletState.address)) {
-                document.getElementById('founderBadgeHeader').style.display = 'inline-block';
-                document.getElementById('founderBadgeWallet').style.display = 'inline-block';
-                document.getElementById('securityStatusText').textContent = 'Secured with password + 2FA + encryption';
-            }
-            
-            updateBalance();
-            updateStats();
-            
-            // Start periodic updates
-            setInterval(updateStats, 5000);
-            setInterval(updateBalance, 10000);
-        }
-
-        function generateSeedPhrase() {
-            const phrase = [];
-            for (let i = 0; i < 24; i++) {
-                phrase.push(wordList[Math.floor(Math.random() * wordList.length)]);
-            }
-            return phrase;
-        }
-
-        function generateRandomString(length) {
-            const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-            let result = '';
-            for (let i = 0; i < length; i++) {
-                result += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-            return result;
-        }
-
-        function generateAddressFromSeed(seed) {
-            let hash = 0;
-            for (let i = 0; i < seed.length; i++) {
-                hash = ((hash << 5) - hash) + seed.charCodeAt(i);
-                hash = hash & hash;
-            }
-            return Math.abs(hash).toString(36).toUpperCase().padEnd(32, '0').substring(0, 32);
-        }
-
-        function copyAddress() {
-            navigator.clipboard.writeText(walletState.address).then(() => {
-                showNotification('Address copied to clipboard', 'success');
-            });
-        }
-
-        function updateBalance() {
-            if (!walletState.address) return;
-            
-            // Simulate balance update - in production, fetch from server
-            document.getElementById('balanceAmount').textContent = `${walletState.balance.toFixed(2)} QRC`;
-            document.getElementById('balanceUSD').textContent = `≈ ${(walletState.balance * 0.001).toFixed(2)} USD`;
-        }
-
-        function updateStats() {
-            // Simulate stats - in production, fetch from server
-            document.getElementById('currentTPS').textContent = Math.floor(800 + Math.random() * 973);
-            document.getElementById('totalBlocks').textContent = Math.floor(Math.random() * 100000);
-            document.getElementById('totalTransactions').textContent = Math.floor(Math.random() * 1000000);
-            document.getElementById('activeUsers').textContent = Math.floor(Math.random() * 10000);
-        }
-
-        function logout() {
-            walletState = {
-                address: null,
-                balance: 0,
-                isLoggedIn: false
-            };
-            sessionPassword = '';
-            localStorage.removeItem('qrcAddressLogin');
-            
-            document.getElementById('loginScreen').style.display = 'flex';
-            document.getElementById('appContainer').style.display = 'none';
-            
-            showNotification('Logged out successfully', 'info');
-        }
-
-        function showSendModal() {
-            showNotification('Send feature coming soon!', 'info');
-        }
-
-        function showReceiveModal() {
-            showNotification('Receive feature coming soon!', 'info');
-        }
-
-        function showTab(tabName) {
-            showNotification(`${tabName} tab coming soon!`, 'info');
-        }
-
-        function moveToNext(event, currentIndex) {
-            if (event.key === ' ' || event.target.value.length > 2) {
-                if (currentIndex < 24) {
-                    document.getElementById(`seed${currentIndex + 1}`)?.focus();
-                }
-            }
-        }
-
-        async function pasteSeedPhrase() {
             try {
-                const text = await navigator.clipboard.readText();
-                const words = text.trim().split(/\s+/);
+                // Create wallet on server
+                const response = await fetch(`${API_BASE}/wallet/create`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
                 
-                if (words.length === 24) {
-                    words.forEach((word, index) => {
-                        const input = document.getElementById(`seed${index + 1}`);
-                        if (input) input.value = word.toLowerCase();
-                    });
-                    showNotification('Seed phrase pasted successfully', 'success');
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Generate seed phrase
+                    const seedPhrase = generateSeedPhrase();
+                    
+                    // Create wallet state
+                    walletState = {
+                        address: data.address,
+                        seedPhrase: seedPhrase,
+                        balance: data.balance,
+                        algorithm: data.algorithm,
+                        publicKeySize: data.public_key_size,
+                        signatureSize: data.signature_size,
+                        isLoggedIn: true,
+                        twoFactorEnabled: false,
+                        twoFactorSecret: null,
+                        transactions: []
+                    };
+                    
+                    sessionPassword = password;
+                    
+                    // Encrypt and save
+                    const encrypted = CryptoJS.AES.encrypt(JSON.stringify(walletState), password).toString();
+                    localStorage.setItem('qrcWalletEncrypted', encrypted);
+                    
+                    showSuccess('Wallet created successfully!');
+                    
+                    // Show main app
+                    document.getElementById('loginScreen').style.display = 'none';
+                    document.getElementById('appContainer').style.display = 'block';
+                    
+                    // Initialize app
+                    initializeApp();
+                    
+                    // Show seed phrase backup modal
+                    setTimeout(() => {
+                        showNotification('⚠️ Please backup your seed phrase immediately!', 'warning');
+                        showSeedPhraseModal();
+                    }, 1000);
                 } else {
-                    showError('Clipboard must contain exactly 24 words');
+                    showError('Failed to create wallet');
                 }
             } catch (error) {
-                showError('Failed to read clipboard');
+                showError('Network error. Please try again.');
             }
         }
-
-        // Check for existing session on load
-        window.onload = function() {
-            document.getElementById('walletPassword').value = '';
-            document.getElementById('login2FA').value = '';
-            document.getElementById('login2FAField').style.display = 'none';
+        
+        function initializeApp() {
+            // Update UI with wallet info
+            document.getElementById('walletAddress').textContent = walletState.address;
             
-            const hasWallet = localStorage.getItem('qrcWalletEncrypted');
-            if (!hasWallet) {
-                showNotification('Welcome! Create a new wallet to get started.', 'info');
+            // Update security status
+            if (walletState.twoFactorEnabled) {
+                document.getElementById('twoFactorStatus').className = 'status-indicator status-enabled';
+                document.getElementById('twoFactorStatus').innerHTML = '<span>●</span><span>Enabled</span>';
+                document.getElementById('twoFactorFeature').className = 'security-feature feature-enabled';
+                document.getElementById('securityStatusText').textContent = 'Secured with password + Google Authenticator + encryption';
             }
-        };
-    </script>
-</body>
-</html>
+            
+            // Update balance
+            updateBalance();
+            
+            // Start real-time updates
+            updateInterval = setInterval(() => {
+                updateBalance();
+                updateStats();
+                updateTransactions();
+            }, 5000);
+            
+            // Load initial data
+            updateStats();
+            updateTransactions();
+        }
+        
+        async function updateBalance() {
+            if (!walletState.address) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/wallet/balance/${walletState.address}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    walletState.balance = data.balance;
+                    document.getElementById('balance').textContent = `${data.balance.toFixed(2)} QRC`;
+                    
+                    // Update USD value (mock calculation)
+                    const usdValue = data.balance * 0.50; // Mock price
+                    document.querySelector('.balance-usd').textContent = `≈ ${usdValue.toFixed(2)} USD`;
+                }
+            } catch (error) {
+                console.error('Balance update error:', error);
+            }
+        }
+        
+        async function updateStats() {
+            try {
+                const response = await fetch(`${API_BASE}/stats`);
+                const data = await response.json();
+                
+                document.getElementById('tps').textContent = data.current_tps || '0';
+                document.getElementById('blocks').textContent = data.block_height || '0';
+                document.getElementById('transactions').textContent = data.total_transactions || '0';
+                document.getElementById('users').textContent = data.active_users || '0';
+            } catch (error) {
+                console.error('Stats update error:', error);
+            }
+        }
+        
+        async function updateTransactions() {
+            try {
+                const response = await fetch(`${API_BASE}/transactions/recent`);
+                const data = await response.json();
+                
+                if (data.success && data.transactions.length > 0) {
+                    const transactionList = document.getElementById('recentTransactions');
+                    transactionList.innerHTML = '';
+                    
+                    data.transactions.slice(0, 5).forEach(tx => {
+                        const isReceived = tx.recipient === walletState.address;
+                        const amount = tx.amount || 0;
+                        
+                        const txElement = document.createElement('div');
+                        txElement.className = 'transaction-item';
+                        txElement.innerHTML = `
+                            <div class="transaction-info">
+                                <div class="transaction-icon">
+                                    ${isReceived ? '📥' : '📤'}
+                                </div>
+                                <div class="transaction-details">
+                                    <h4>${isReceived ? 'Received' : 'Sent'}</h4>
+                                    <span class="transaction-address">${isReceived ? tx.sender : tx.recipient}</span>
+                                </div>
+                            </div>
+                            <div class="transaction-amount ${isReceived ? 'amount-positive' : 'amount-negative'}">
+                                ${isReceived ? '+' : '-'}${amount.toFixed(2)} QRC
+                            </div>
+                        `;
+                        transactionList.appendChild(txElement);
+                    });
+                }
+            } catch (error) {
+                console.error('Transaction update error:', error);
+            }
+        }
+        
+        // Tab management
+        function showTab(tabName) {
+            // Update nav links
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('data-tab') === tabName) {
+                    link.classList.add('active');
+                }
+            });
+            
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            const tabElement = document.getElementById(tabName + 'Tab');
+            if (tabElement) {
+                tabElement.classList.add('active');
+            }
+        }
+        
+        // Security functions
+        function showTwoFactorModal() {
+            if (walletState.twoFactorEnabled) {
+                showNotification('Google Authenticator is already enabled', 'info');
+                return;
+            }
+            
+            // Generate secret
+            const secret = generateTOTPSecret();
+            walletState.twoFactorSecret = secret;
+            
+            // Generate QR code
+            const otpauth = `otpauth://totp/QRC%20Wallet:${walletState.address}?secret=${secret}&issuer=QRC%20Wallet`;
+            
+            // Clear previous QR code
+            document.getElementById('qrCodeContainer').innerHTML = '';
+            
+            // Generate new QR code
+            new QRCode(document.getElementById('qrCodeContainer'), {
+                text: otpauth,
+                width: 200,
+                height: 200,
+                colorDark: '#000000',
+                colorLight: '#ffffff'
+            });
+            
+            // Show manual code
+            document.getElementById('manualCode').textContent = secret.match(/.{1,4}/g).join(' ');
+            
+            // Clear code inputs
+            clearCodeContainer('verify2FAContainer');
+            
+            document.getElementById('twoFactorModal').style.display = 'flex';
+        }
+        
+        function generateTOTPSecret() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+            let secret = '';
+            for (let i = 0; i < 32; i++) {
+                secret += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return secret;
+        }
+        
+        function verify2FA() {
+            const code = getCodeFromContainer('verify2FAContainer');
+            
+            if (!code || code.length !== 6) {
+                showNotification('Please enter the 6-digit code from Google Authenticator', 'error');
+                return;
+            }
+            
+            if (verifyTOTP(walletState.twoFactorSecret, code)) {
+                walletState.twoFactorEnabled = true;
+                
+                // Generate backup codes
+                walletState.backupCodes = generateBackupCodes();
+                
+                // Save encrypted wallet
+                const encrypted = CryptoJS.AES.encrypt(JSON.stringify(walletState), sessionPassword).toString();
+                localStorage.setItem('qrcWalletEncrypted', encrypted);
+                
+                // Update UI
+                document.getElementById('twoFactorStatus').className = 'status-indicator status-enabled';
+                document.getElementById('twoFactorStatus').innerHTML = '<span>●</span><span>Enabled</span>';
+                document.getElementById('twoFactorFeature').className = 'security-feature feature-enabled';
+                document.getElementById('securityStatusText').textContent = 'Secured with password + Google Authenticator + encryption';
+                
+                closeModal('twoFactorModal');
+                showNotification('Google Authenticator enabled successfully!', 'success');
+                
+                // Show backup codes
+                setTimeout(() => {
+                    showBackupCodesModal();
+                }, 500);
+            } else {
+                showNotification('Invalid code. Please check Google Authenticator and try again.', 'error');
+                clearCodeContainer('verify2FAContainer');
+            }
+        }
+        
+        function verifyTOTP(secret, token) {
+            // Simple TOTP verification (in production, use server-side verification)
+            const time = Math.floor(Date.now() / 1000 / 30);
+            const expectedToken = generateTOTP(secret, time);
+            const previousToken = generateTOTP(secret, time - 1);
+            const nextToken = generateTOTP(secret, time + 1);
+            
+            return token === expectedToken || token === previousToken || token === nextToken;
+        }
+        
+        function generateTOTP(secret, time) {
+            // Simplified TOTP generation (in production, use proper library)
+            const hash = CryptoJS.HmacSHA1(time.toString(), secret).toString();
+            const offset = parseInt(hash.substr(-1), 16);
+            const binary = parseInt(hash.substr(offset * 2, 8), 16) & 0x7fffffff;
+            const otp = binary % 1000000;
+            return otp.toString().padStart(6, '0');
+        }
+        
+        function generateBackupCodes() {
+            const codes = [];
+            for (let i = 0; i < 10; i++) {
+                const code = Math.random().toString(36).substr(2, 8).toUpperCase();
+                codes.push(code);
+            }
+            return codes;
+        }
+        
+        function showBackupCodesModal() {
+            // Implementation for backup codes modal
+            showNotification('Backup codes generated. Please save them securely.', 'info');
+        }
+        
+        function showChangePasswordModal() {
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('newPasswordChange').value = '';
+            document.getElementById('confirmPasswordChange').value = '';
+            
+            if (walletState.twoFactorEnabled) {
+                document.getElementById('passwordChange2FAField').style.display = 'block';
+                clearCodeContainer('changePasswordCodeContainer');
+            } else {
+                document.getElementById('passwordChange2FAField').style.display = 'none';
+            }
+            
+            document.getElementById('changePasswordModal').style.display = 'flex';
+        }
+        
+        function changePassword() {
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPasswordChange').value;
+            const confirmPassword = document.getElementById('confirmPasswordChange').value;
+            const twoFactorCode = getCodeFromContainer('changePasswordCodeContainer');
+            
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                showNotification('Please fill in all password fields', 'error');
+                return;
+            }
+            
+            if (currentPassword !== sessionPassword) {
+                showNotification('Current password is incorrect', 'error');
+                return;
+            }
+            
+            if (newPassword.length < 8) {
+                showNotification('New password must be at least 8 characters', 'error');
+                return;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                showNotification('New passwords do not match', 'error');
+                return;
+            }
+            
+            if (walletState.twoFactorEnabled && !verifyTOTP(walletState.twoFactorSecret, twoFactorCode)) {
+                showNotification('Invalid Google Authenticator code', 'error');
+                clearCodeContainer('changePasswordCodeContainer');
+                return;
+            }
+            
+            // Update password
+            sessionPassword = newPassword;
+            
+            // Re-encrypt wallet with new password
+            const encrypted = CryptoJS.AES.encrypt(JSON.stringify(walletState), newPassword).toString();
+            localStorage.setItem('qrcWalletEncrypted', encrypted);
+            
+            closeModal('changePasswordModal');
+            showNotification('Password changed successfully!', 'success');
+        }
+        
+        function showSeedPhraseModal() {
+            // Implementation for seed phrase modal
+            showNotification('Seed phrase backup feature coming soon', 'info');
+        }
+        
+        function showExportPrivateKeyModal() {
+            // Implementation for private key export
+            showNotification('Private key export feature coming soon', 'info');
+        }
+        
+        // Utility functions
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+        
+        function copyAddress() {
+            navigator.clipboard.writeText(walletState.address);
+            showNotification('Address copied to clipboard!', 'success');
+        }
+        
+        function showQRCode() {
+            // Implementation for QR code display
+            showNotification('QR code feature coming soon', 'info');
+        }
+        
+        function refreshWallet() {
+            updateBalance();
+            updateStats();
+            updateTransactions();
+            showNotification('Wallet refreshed', 'success');
+        }
+        
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                walletState = {
+                    address: null,
+                    seedPhrase: null,
+                    balance: 0,
+                    encryptedData: null,
+                    isLoggedIn: false,
+                    transactions: []
+                };
+                
+                sessionPassword = null;
+                
+                if (updateInterval) {
+                    clearInterval(updateInterval);
+                }
+                
+                document.getElementById('appContainer').style.display = 'none';
+                document.getElementById('loginScreen').style.display = 'block';
+                
+                // Clear all input fields
+                document.querySelectorAll('input').forEach(input => input.value = '');
+                
+                showNotification('Logged out successfully', 'info');
+            }
+        }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeCodeInputs();
+            
+            // Check for existing wallet
+            const encryptedWallet = localStorage.getItem('qrcWalletEncrypted');
+            if (encryptedWallet) {
+                showSuccess('Wallet found. Please enter your password to unlock.');
+            }
+        });
