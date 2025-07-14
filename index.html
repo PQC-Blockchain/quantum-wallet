@@ -1,16 +1,629 @@
-# Serve HTML files based on domain
-@app.route('/')
-def serve_main():
-    # Get the host from the request
-    host = request.host
-    
-    # Serve different content based on domain
-    if 'pqc-blockchain' in host:
-        # Serve the documentation/landing page
-        if os.path.exists('index.html'):
-            return send_file('index.html')
-        else:
-            return "Documentation page not found. Please add index.html", 404
-    else:
-        # Default to wallet for quantum-wallet domain or localhost
-        return send_file('quantum_web_wallet.html')
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PQC Blockchain - Quantum-Resistant Blockchain Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Animated background */
+        .bg-animation {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            background: linear-gradient(45deg, #0a0a0a 0%, #1a1a2e 50%, #0a0a0a 100%);
+            animation: gradientShift 10s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        /* Quantum particles effect */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: #00ff88;
+            border-radius: 50%;
+            animation: float 20s infinite linear;
+            opacity: 0.5;
+        }
+
+        @keyframes float {
+            from {
+                transform: translateY(100vh) translateX(0);
+            }
+            to {
+                transform: translateY(-10vh) translateX(100px);
+            }
+        }
+
+        /* Header */
+        header {
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0, 255, 136, 0.3);
+            padding: 1rem 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+
+        nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #00ff88;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: #ffffff;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: #00ff88;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6rem 2rem 4rem;
+            text-align: center;
+            background: radial-gradient(circle at center, rgba(0, 255, 136, 0.1) 0%, transparent 70%);
+        }
+
+        .hero-content {
+            max-width: 800px;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #00ff88 0%, #00cc66 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .tagline {
+            font-size: 1.5rem;
+            color: #888;
+            margin-bottom: 2rem;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00ff88 0%, #00cc66 100%);
+            color: #0a0a0a;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 255, 136, 0.3);
+        }
+
+        .btn-secondary {
+            border: 2px solid #00ff88;
+            color: #00ff88;
+            background: transparent;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(0, 255, 136, 0.1);
+        }
+
+        /* Stats Section */
+        .stats {
+            background: rgba(26, 26, 46, 0.3);
+            padding: 4rem 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .stats-grid {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(10, 10, 10, 0.5);
+            padding: 2rem;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(0, 255, 136, 0.5);
+            box-shadow: 0 10px 30px rgba(0, 255, 136, 0.2);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #00ff88;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: #888;
+        }
+
+        /* Features Section */
+        .features {
+            padding: 6rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            text-align: center;
+            margin-bottom: 3rem;
+            color: #00ff88;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-card {
+            background: rgba(26, 26, 46, 0.3);
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            transition: all 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(0, 255, 136, 0.5);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-title {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #00ff88;
+        }
+
+        .feature-description {
+            color: #aaa;
+            line-height: 1.8;
+        }
+
+        /* Installation Section */
+        .installation {
+            background: rgba(10, 10, 10, 0.95);
+            padding: 6rem 2rem;
+        }
+
+        .installation-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .code-block {
+            background: #1a1a1a;
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+        }
+
+        .code-block code {
+            color: #00ff88;
+        }
+
+        .step {
+            margin-bottom: 2rem;
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: #00ff88;
+            color: #0a0a0a;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: bold;
+            margin-right: 1rem;
+        }
+
+        /* API Section */
+        .api-section {
+            padding: 6rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .api-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .api-card {
+            background: rgba(26, 26, 46, 0.3);
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            border-radius: 12px;
+            padding: 2rem;
+        }
+
+        .api-method {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: #00ff88;
+            color: #0a0a0a;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .api-endpoint {
+            font-family: 'Courier New', monospace;
+            color: #00ff88;
+            margin-bottom: 1rem;
+        }
+
+        /* Footer */
+        footer {
+            background: rgba(10, 10, 10, 0.95);
+            padding: 3rem 2rem;
+            text-align: center;
+            border-top: 1px solid rgba(0, 255, 136, 0.3);
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer-links a {
+            color: #888;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: #00ff88;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .nav-links {
+                display: none;
+            }
+            
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 100%;
+                max-width: 300px;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation"></div>
+    <div class="particles" id="particles"></div>
+
+    <header>
+        <nav>
+            <a href="#" class="logo">
+                🔒 PQC Blockchain
+            </a>
+            <ul class="nav-links">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#installation">Installation</a></li>
+                <li><a href="#api">API</a></li>
+                <li><a href="https://github.com/PQC-Blockchain" target="_blank">GitHub</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section class="hero">
+        <div class="hero-content">
+            <h1>PQC Blockchain</h1>
+            <p class="tagline">The First Quantum-Resistant Blockchain Platform</p>
+            <p style="margin-bottom: 2rem; color: #aaa;">
+                Built with CRYSTALS-Dilithium2 cryptography to protect against quantum computer attacks. 
+                Join the future of secure blockchain technology.
+            </p>
+            <div class="cta-buttons">
+                <a href="https://quantum-wallet.onrender.com" class="btn btn-primary" target="_blank">
+                    💳 Launch Wallet
+                </a>
+                <a href="#installation" class="btn btn-secondary">
+                    ⛏️ Start Mining
+                </a>
+                <a href="https://github.com/PQC-Blockchain/quantum-wallet" class="btn btn-secondary" target="_blank">
+                    📚 View on GitHub
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <section class="stats">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">1,773</div>
+                <div class="stat-label">Transactions Per Second</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">NIST-2</div>
+                <div class="stat-label">Security Level</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">100%</div>
+                <div class="stat-label">Quantum Safe</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">25 QRC</div>
+                <div class="stat-label">Token Creation Cost</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="features" id="features">
+        <h2 class="section-title">Why Choose PQC Blockchain?</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🛡️</div>
+                <h3 class="feature-title">Quantum-Resistant</h3>
+                <p class="feature-description">
+                    Protected by CRYSTALS-Dilithium2, a NIST-approved post-quantum cryptographic algorithm. 
+                    Your assets remain secure even against future quantum computers.
+                </p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <h3 class="feature-title">High Performance</h3>
+                <p class="feature-description">
+                    Achieve up to 1,773 transactions per second with our optimized consensus mechanism. 
+                    Fast, efficient, and scalable for real-world applications.
+                </p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">💰</div>
+                <h3 class="feature-title">Built-in DeFi</h3>
+                <p class="feature-description">
+                    Create tokens, register domains, store files, and more. Everything you need for 
+                    decentralized finance in one quantum-safe platform.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <section class="installation" id="installation">
+        <div class="installation-content">
+            <h2 class="section-title">Quick Start Guide</h2>
+            
+            <div class="step">
+                <h3><span class="step-number">1</span>Clone the Repository</h3>
+                <div class="code-block">
+                    <code>git clone https://github.com/PQC-Blockchain/quantum-wallet.git
+cd quantum-wallet</code>
+                </div>
+            </div>
+
+            <div class="step">
+                <h3><span class="step-number">2</span>Install Dependencies</h3>
+                <div class="code-block">
+                    <code>pip install -r requirements.txt</code>
+                </div>
+            </div>
+
+            <div class="step">
+                <h3><span class="step-number">3</span>Configure Your Node</h3>
+                <div class="code-block">
+                    <code># Create .env file
+echo "NODE_ADDRESS=0.0.0.0" > .env
+echo "NODE_PORT=5000" >> .env
+echo "MINING_ENABLED=true" >> .env</code>
+                </div>
+            </div>
+
+            <div class="step">
+                <h3><span class="step-number">4</span>Start Mining</h3>
+                <div class="code-block">
+                    <code>python pqc_blockchain_server_enhanced.py</code>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="api-section" id="api">
+        <h2 class="section-title">API Documentation</h2>
+        <p style="text-align: center; color: #aaa; margin-bottom: 2rem;">
+            Integrate PQC Blockchain into your applications with our simple REST API
+        </p>
+        
+        <div class="api-grid">
+            <div class="api-card">
+                <span class="api-method">POST</span>
+                <div class="api-endpoint">/api/wallet/create</div>
+                <p>Create a new quantum-resistant wallet</p>
+            </div>
+            
+            <div class="api-card">
+                <span class="api-method">GET</span>
+                <div class="api-endpoint">/api/wallet/balance/{address}</div>
+                <p>Check wallet balance and details</p>
+            </div>
+            
+            <div class="api-card">
+                <span class="api-method">POST</span>
+                <div class="api-endpoint">/api/transaction/send</div>
+                <p>Send QRC tokens between wallets</p>
+            </div>
+            
+            <div class="api-card">
+                <span class="api-method">POST</span>
+                <div class="api-endpoint">/api/token/create</div>
+                <p>Create custom QRC-20 tokens</p>
+            </div>
+            
+            <div class="api-card">
+                <span class="api-method">GET</span>
+                <div class="api-endpoint">/api/blockchain/blocks</div>
+                <p>Query blockchain blocks and data</p>
+            </div>
+            
+            <div class="api-card">
+                <span class="api-method">GET</span>
+                <div class="api-endpoint">/api/stats</div>
+                <p>Get network statistics and metrics</p>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 3rem;">
+            <a href="https://github.com/PQC-Blockchain/quantum-wallet/wiki/API-Documentation" class="btn btn-secondary" target="_blank">
+                📖 Full API Documentation
+            </a>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-links">
+            <a href="https://github.com/PQC-Blockchain" target="_blank">GitHub</a>
+            <a href="https://quantum-wallet.onrender.com" target="_blank">Wallet</a>
+            <a href="#api">Documentation</a>
+            <a href="mailto:support@pqc-blockchain.com">Contact</a>
+        </div>
+        <p style="color: #666;">
+            © 2025 PQC Blockchain. Building the quantum-safe future of finance.
+        </p>
+    </footer>
+
+    <script>
+        // Create floating particles
+        const particlesContainer = document.getElementById('particles');
+        for (let i = 0; i < 50; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.animationDelay = Math.random() * 20 + 's';
+            particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+            particlesContainer.appendChild(particle);
+        }
+
+        // Smooth scrolling
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body>
+</html>
