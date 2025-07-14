@@ -1253,8 +1253,20 @@ def revenue_analytics():
 
 # Serve HTML files
 @app.route('/')
-def serve_wallet():
-    return send_file('quantum_web_wallet.html')
+def serve_main():
+    # Get the host from the request
+    host = request.host
+    
+    # Serve different content based on domain
+    if 'pqc-blockchain' in host:
+        # Serve the documentation/landing page
+        if os.path.exists('index.html'):
+            return send_file('index.html')
+        else:
+            return "Documentation page not found. Please add index.html", 404
+    else:
+        # Default to wallet for quantum-wallet domain or localhost
+        return send_file('quantum_web_wallet.html')
 
 @app.route('/<path:path>')
 def serve_static(path):
