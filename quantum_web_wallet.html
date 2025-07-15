@@ -1006,16 +1006,16 @@
         }
 
         function startRealtimeUpdates() {
-            // Update balance every 5 seconds
-            setInterval(() => {
-                updateBalance();
-            }, 5000);
-            
-            // Update stats every 3 seconds
-            setInterval(() => {
-                updateStats();
-            }, 3000);
-        }
+    // Update balance every 30 seconds (was 5)
+    window.balanceInterval = setInterval(() => {
+        updateBalance();
+    }, 30000);
+    
+    // Update stats every 10 seconds (was 3)
+    window.statsInterval = setInterval(() => {
+        updateStats();
+    }, 10000);
+}
 
         // Wallet functions
         function generateSeedPhrase() {
