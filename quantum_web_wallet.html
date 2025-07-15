@@ -3,1255 +3,738 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quantum Wallet - Secure QRC Wallet</title>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>QRC Wallet - Quantum Resistant Blockchain</title>
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%2300ff88' rx='20'/></svg>">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%); color: #ffffff; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        
+        /* Login Screen Styles */
+        .login-container { 
+            width: 100%; 
+            max-width: 400px; 
+            background: rgba(255, 255, 255, 0.05); 
+            padding: 40px; 
+            border-radius: 24px; 
+            backdrop-filter: blur(20px); 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            margin-top: 100px;
         }
-
-        body {
-            font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0a0a0a;
-            color: #ffffff;
-            min-height: 100vh;
+        .login-logo { text-align: center; margin-bottom: 30px; }
+        .login-logo .logo { width: 80px; height: 80px; background: #00ff88; border-radius: 20px; display: inline-flex; align-items: center; justify-content: center; font-size: 36px; font-weight: bold; color: #000; margin-bottom: 20px; }
+        .login-title { font-size: 24px; text-align: center; margin-bottom: 10px; }
+        .login-subtitle { color: #999; text-align: center; margin-bottom: 30px; }
+        .input-group { margin-bottom: 20px; }
+        .input-label { display: block; margin-bottom: 8px; color: #999; font-size: 14px; }
+        .input-field { width: 100%; padding: 15px; border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 8px; background: rgba(255, 255, 255, 0.05); color: white; font-size: 16px; transition: all 0.3s; }
+        .input-field:focus { outline: none; border-color: #00ff88; background: rgba(255, 255, 255, 0.08); }
+        .password-toggle { position: relative; }
+        .password-toggle-btn { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #999; cursor: pointer; font-size: 20px; }
+        .error-message { background: rgba(255, 107, 107, 0.1); border: 1px solid #ff6b6b; padding: 10px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; display: none; }
+        .success-message { background: rgba(0, 255, 136, 0.1); border: 1px solid #00ff88; padding: 10px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; display: none; }
+        
+        /* 6-digit code input styles */
+        .code-input-container {
             display: flex;
-            align-items: center;
+            gap: 10px;
             justify-content: center;
-            overflow-x: hidden;
+            margin-bottom: 20px;
         }
-
-        .animated-bg {
-            position: fixed;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            z-index: -1;
-            opacity: 0.3;
-        }
-
-        .particle {
-            position: absolute;
-            width: 4px;
-            height: 4px;
-            background: #00ff88;
-            border-radius: 50%;
-            filter: blur(1px);
-            animation: float 20s infinite;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0) translateX(0); opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            100% { transform: translateY(-100vh) translateX(100px); opacity: 0; }
-        }
-
-        .container {
-            width: 100%;
-            max-width: 480px;
-            background: rgba(20, 20, 20, 0.95);
-            backdrop-filter: blur(20px);
-            border-radius: 24px;
-            padding: 40px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            position: relative;
-            animation: slideIn 0.5s ease-out;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .logo {
+        .code-input {
+            width: 45px;
+            height: 50px;
             text-align: center;
-            margin-bottom: 30px;
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
-        .logo-icon {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #00ff88, #00cc66);
-            border-radius: 20px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 40px;
-            margin-bottom: 16px;
-            box-shadow: 0 10px 30px rgba(0, 255, 136, 0.3);
-        }
-
-        h1 {
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 8px;
-            background: linear-gradient(135deg, #ffffff, #cccccc);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .subtitle {
-            color: #999;
-            font-size: 16px;
-            margin-bottom: 40px;
-        }
-
-        .input-group {
-            margin-bottom: 24px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            color: #cccccc;
-        }
-
-        input {
-            width: 100%;
-            padding: 16px;
+            font-size: 24px;
+            font-weight: bold;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
             background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            font-size: 16px;
-            color: #ffffff;
-            transition: all 0.3s ease;
-            font-family: 'Space Grotesk', sans-serif;
-            autocomplete: off;
+            color: white;
+            transition: all 0.3s;
         }
-
-        input:focus {
+        .code-input:focus {
             outline: none;
             border-color: #00ff88;
             background: rgba(255, 255, 255, 0.08);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 20px rgba(0, 255, 136, 0.2);
-        }
-
-        input::placeholder {
-            color: #666;
-        }
-
-        .button {
-            width: 100%;
-            padding: 16px;
-            background: linear-gradient(135deg, #00ff88, #00cc66);
-            color: #000000;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(0, 255, 136, 0.3);
-        }
-
-        .button:active {
-            transform: translateY(0);
-        }
-
-        .button-secondary {
-            background: rgba(255, 255, 255, 0.1);
-            color: #ffffff;
-            backdrop-filter: blur(10px);
-        }
-
-        .button-secondary:hover {
-            background: rgba(255, 255, 255, 0.15);
-            box-shadow: 0 10px 30px rgba(255, 255, 255, 0.1);
-        }
-
-        .link {
-            color: #00ff88;
-            text-decoration: none;
-            font-weight: 500;
-            transition: opacity 0.3s ease;
-        }
-
-        .link:hover {
-            opacity: 0.8;
-        }
-
-        .divider {
-            text-align: center;
-            margin: 30px 0;
-            position: relative;
-        }
-
-        .divider::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .divider span {
-            background: rgba(20, 20, 20, 0.95);
-            padding: 0 20px;
-            position: relative;
-            color: #666;
-            font-size: 14px;
-        }
-
-        .form-footer {
-            text-align: center;
-            margin-top: 30px;
-            font-size: 14px;
-            color: #999;
-        }
-
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 16px 24px;
-            background: rgba(20, 20, 20, 0.95);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            animation: slideInRight 0.3s ease-out;
-            z-index: 1000;
-            max-width: 400px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        @keyframes slideInRight {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        .notification.success {
-            border-color: #00ff88;
-        }
-
-        .notification.error {
-            border-color: #ff3333;
-        }
-
-        .wallet-container {
-            animation: fadeIn 0.5s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
-        }
-
-        .wallet-header {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 30px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .wallet-header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(0, 255, 136, 0.1) 0%, transparent 70%);
-            animation: rotate 20s linear infinite;
-        }
-
-        @keyframes rotate {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .address-display {
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            color: #00ff88;
-            word-break: break-all;
-            margin: 10px 0;
-            padding: 10px;
-            background: rgba(0, 255, 136, 0.1);
-            border-radius: 8px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .balance-display {
-            text-align: center;
-            margin: 30px 0;
-            padding: 30px;
-            background: rgba(255, 255, 255, 0.02);
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .balance-label {
-            font-size: 14px;
-            color: #999;
-            margin-bottom: 8px;
-        }
-
-        .balance-amount {
-            font-size: 36px;
-            font-weight: 700;
-            color: #ffffff;
-            margin-bottom: 8px;
-        }
-
-        .balance-usd {
-            font-size: 16px;
-            color: #666;
-        }
-
-        .wallet-actions {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            margin-bottom: 30px;
-        }
-
-        .action-button {
-            padding: 16px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            color: #ffffff;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .action-button:hover {
-            background: rgba(255, 255, 255, 0.1);
-            transform: translateY(-2px);
-        }
-
-        .action-button span:first-child {
-            font-size: 24px;
-        }
-
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            backdrop-filter: blur(5px);
-        }
-
-        .modal-content {
-            background: rgba(20, 20, 20, 0.98);
-            border-radius: 24px;
-            padding: 40px;
-            max-width: 480px;
-            width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
-            position: relative;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            animation: modalSlideIn 0.3s ease-out;
-        }
-
-        @keyframes modalSlideIn {
-            from {
-                transform: translateY(50px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-        }
-
-        .modal-title {
-            font-size: 24px;
-            font-weight: 600;
-        }
-
-        .close-button {
-            background: none;
-            border: none;
-            color: #999;
-            font-size: 28px;
-            cursor: pointer;
-            transition: color 0.3s ease;
-            line-height: 1;
-        }
-
-        .close-button:hover {
-            color: #ffffff;
-        }
-
-        .qr-container {
-            text-align: center;
-            padding: 20px;
-            background: #ffffff;
-            border-radius: 16px;
-            margin: 20px 0;
-        }
-
-        .tabs {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 24px;
-            padding: 4px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-        }
-
-        .tab {
-            flex: 1;
-            padding: 12px;
-            background: transparent;
-            border: none;
-            border-radius: 8px;
-            color: #999;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .tab.active {
-            background: rgba(0, 255, 136, 0.1);
-            color: #00ff88;
-        }
-
-        .tab:hover:not(.active) {
-            color: #ffffff;
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-            animation: fadeIn 0.3s ease-out;
-        }
-
-        .transaction-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .transaction-item {
-            padding: 16px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            transition: all 0.3s ease;
-        }
-
-        .transaction-item:hover {
-            background: rgba(255, 255, 255, 0.08);
-            transform: translateX(4px);
-        }
-
-        .transaction-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-        }
-
-        .transaction-icon.sent {
-            background: rgba(255, 107, 107, 0.2);
-            color: #ff6b6b;
-        }
-
-        .transaction-icon.received {
-            background: rgba(0, 255, 136, 0.2);
-            color: #00ff88;
-        }
-
-        .transaction-details {
-            flex: 1;
-        }
-
-        .transaction-type {
-            font-weight: 500;
-            margin-bottom: 4px;
-        }
-
-        .transaction-address {
-            font-size: 12px;
-            color: #666;
-            font-family: 'Courier New', monospace;
-        }
-
-        .transaction-amount {
-            text-align: right;
-        }
-
-        .transaction-value {
-            font-weight: 600;
-            font-size: 16px;
-        }
-
-        .transaction-value.positive {
-            color: #00ff88;
-        }
-
-        .transaction-value.negative {
-            color: #ff6b6b;
-        }
-
-        .transaction-usd {
-            font-size: 12px;
-            color: #666;
-            margin-top: 4px;
-        }
-
-        .security-info {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 24px;
-        }
-
-        .security-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .security-item:last-child {
-            border-bottom: none;
-        }
-
-        .security-label {
-            color: #999;
-        }
-
-        .security-value {
-            color: #00ff88;
-            font-weight: 500;
-        }
-
-        .two-fa-input {
-            display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            gap: 8px;
-            margin: 20px 0;
-        }
-
-        .two-fa-input input {
-            text-align: center;
-            font-size: 20px;
-            font-weight: 600;
-            padding: 12px 8px;
-        }
-
-        .seed-phrase-input {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            margin: 20px 0;
-        }
-
-        .seed-input {
-            display: flex;
-            align-items: center;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            padding: 8px 12px;
-            transition: all 0.3s ease;
-        }
-
-        .seed-input span {
-            color: #666;
-            font-size: 12px;
-            margin-right: 8px;
-            min-width: 20px;
-        }
-
-        .seed-input input {
-            background: transparent;
-            border: none;
-            padding: 4px;
-            width: 100%;
-            font-size: 14px;
-        }
-
-        .seed-input:focus-within {
-            border-color: #00ff88;
-            background: rgba(255, 255, 255, 0.08);
-            transform: scale(1.05);
-        }
-
-        .password-strength {
-            height: 4px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 2px;
-            margin-top: 8px;
-            overflow: hidden;
-        }
-
-        .password-strength-bar {
-            height: 100%;
-            transition: all 0.3s ease;
-            border-radius: 2px;
-        }
-
-        .strength-weak {
-            width: 33%;
-            background: #ff6b6b;
-        }
-
-        .strength-medium {
-            width: 66%;
-            background: #ffa500;
-        }
-
-        .strength-strong {
-            width: 100%;
-            background: #00ff88;
-        }
-
-        .wallet-connect-btn {
-            width: 100%;
-            padding: 16px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            color: #ffffff;
-            font-size: 16px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-        }
-
-        .wallet-connect-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
-            transform: translateY(-2px);
-        }
-
-        .wallet-connect-btn svg {
-            width: 24px;
-            height: 24px;
-        }
-
-        .import-tab-content {
-            display: none;
-        }
-
-        .tab-buttons {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 20px;
-            padding: 4px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-        }
-
-        .tab-button {
-            flex: 1;
-            padding: 12px;
-            background: transparent;
-            border: none;
-            border-radius: 8px;
-            color: #999;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .tab-button.active {
-            background: rgba(0, 255, 136, 0.1);
-            color: #00ff88;
-        }
-
-        @media (max-width: 640px) {
-            .container {
-                margin: 20px;
-                padding: 30px 20px;
-            }
-
-            .wallet-actions {
-                grid-template-columns: 1fr;
-            }
-
-            .balance-amount {
-                font-size: 28px;
-            }
-
-            .seed-phrase-input {
-                grid-template-columns: repeat(2, 1fr);
-            }
+            transform: scale(1.1);
+        }
+        
+        /* Main App Styles */
+        .app-container { width: 100%; display: none; }
+        .main-header { width: 100%; max-width: 1200px; display: flex; justify-content: space-between; align-items: center; margin: 0 auto 40px; padding: 20px 0; }
+        .logo-section { display: flex; align-items: center; gap: 15px; }
+        .logo { width: 50px; height: 50px; background: #00ff88; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000; }
+        .logo-text { font-size: 24px; font-weight: 700; }
+        .nav-links { display: flex; gap: 30px; align-items: center; }
+        .nav-link { color: #999; text-decoration: none; transition: color 0.3s; font-size: 14px; cursor: pointer; }
+        .nav-link:hover { color: #00ff88; }
+        .user-menu { display: flex; align-items: center; gap: 20px; }
+        .user-info { display: flex; align-items: center; gap: 10px; padding: 8px 16px; background: rgba(255, 255, 255, 0.05); border-radius: 20px; }
+        .user-avatar { width: 32px; height: 32px; background: #00ff88; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000; }
+        .logout-btn { background: none; border: 1px solid #ff6b6b; color: #ff6b6b; padding: 8px 16px; border-radius: 8px; cursor: pointer; transition: all 0.3s; }
+        .logout-btn:hover { background: #ff6b6b; color: white; }
+        .network-indicator { display: flex; align-items: center; gap: 8px; background: rgba(0, 255, 136, 0.1); padding: 8px 16px; border-radius: 20px; font-size: 12px; }
+        .network-dot { width: 8px; height: 8px; background: #00ff88; border-radius: 50%; animation: pulse 2s infinite; }
+        .main-content { width: 100%; max-width: 1200px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin: 0 auto 40px; }
+        .stats-section { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+        .stat-card { background: rgba(255, 255, 255, 0.05); padding: 24px; border-radius: 16px; backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); transition: all 0.3s ease; }
+        .stat-card:hover { transform: translateY(-5px); background: rgba(255, 255, 255, 0.08); }
+        .stat-value { font-size: 32px; font-weight: 700; color: #00ff88; margin-bottom: 5px; }
+        .stat-label { font-size: 12px; color: #999; text-transform: uppercase; letter-spacing: 1px; }
+        .wallet-section { background: rgba(255, 255, 255, 0.05); padding: 40px; border-radius: 24px; backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3); }
+        .wallet-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .wallet-title { font-size: 20px; font-weight: 600; }
+        .wallet-menu { display: flex; gap: 10px; }
+        .menu-button { background: none; border: none; color: #999; cursor: pointer; padding: 8px; transition: color 0.3s; }
+        .menu-button:hover { color: #00ff88; }
+        .security-status { display: flex; align-items: center; gap: 10px; background: rgba(0, 255, 136, 0.1); padding: 8px 16px; border-radius: 20px; margin-bottom: 20px; }
+        .security-icon { color: #00ff88; }
+        .algorithm-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(0, 255, 136, 0.1); padding: 6px 12px; border-radius: 20px; font-size: 12px; color: #00ff88; margin-bottom: 20px; }
+        .algorithm-badge .badge-icon { width: 16px; height: 16px; background: #00ff88; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #000; font-weight: bold; }
+        .wallet-display { background: rgba(0, 0, 0, 0.3); padding: 24px; border-radius: 16px; margin-bottom: 30px; }
+        .wallet-address-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .wallet-label { font-size: 12px; color: #999; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+        .wallet-address { font-family: 'Courier New', monospace; font-size: 14px; word-break: break-all; cursor: pointer; transition: color 0.3s; }
+        .wallet-address:hover { color: #00ff88; }
+        .address-actions { display: flex; gap: 10px; }
+        .balance-display { text-align: center; padding: 30px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 30px; }
+        .balance-label { font-size: 14px; color: #999; margin-bottom: 10px; }
+        .balance-amount { font-size: 48px; font-weight: 700; background: linear-gradient(45deg, #00ff88, #00ffff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 5px; }
+        .balance-usd { font-size: 18px; color: #999; }
+        .button { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .button-primary { background: linear-gradient(45deg, #00ff88, #00cc77); color: #000; }
+        .button-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0, 255, 136, 0.3); }
+        .button-secondary { background: transparent; color: #00ff88; border: 2px solid #00ff88; }
+        .button-secondary:hover { background: #00ff88; color: #000; }
+        .tabs { display: flex; border-bottom: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 30px; }
+        .tab { padding: 12px 24px; cursor: pointer; color: #999; transition: all 0.3s; border-bottom: 2px solid transparent; }
+        .tab.active { color: #00ff88; border-bottom-color: #00ff88; }
+        .tab:hover { color: #00ff88; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .transaction-item { background: rgba(255, 255, 255, 0.05); padding: 16px; border-radius: 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; transition: all 0.3s; animation: fadeIn 0.3s ease-out; }
+        .transaction-item:hover { background: rgba(255, 255, 255, 0.08); }
+        .transaction-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-right: 15px; }
+        .transaction-icon.received { background: rgba(0, 255, 136, 0.1); color: #00ff88; }
+        .transaction-icon.sent { background: rgba(255, 107, 107, 0.1); color: #ff6b6b; }
+        .transaction-details { flex: 1; }
+        .transaction-type { font-weight: 600; margin-bottom: 4px; }
+        .transaction-address { font-size: 12px; color: #999; font-family: monospace; }
+        .transaction-time { font-size: 11px; color: #666; margin-top: 4px; }
+        .transaction-amount { text-align: right; }
+        .transaction-value { font-weight: 600; font-size: 16px; }
+        .transaction-value.positive { color: #00ff88; }
+        .transaction-value.negative { color: #ff6b6b; }
+        .transaction-usd { font-size: 12px; color: #999; }
+        .empty-state { text-align: center; padding: 60px 20px; color: #999; }
+        .empty-state-icon { font-size: 48px; margin-bottom: 20px; opacity: 0.5; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.9); align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+        .modal-content { background: #1a1a3e; padding: 40px; border-radius: 24px; max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto; animation: fadeIn 0.3s ease-out; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .modal-title { font-size: 24px; font-weight: 600; }
+        .close-modal { background: none; border: none; color: #999; font-size: 24px; cursor: pointer; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.3s; }
+        .close-modal:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
+        .qr-container { background: #fff; padding: 30px; border-radius: 16px; text-align: center; }
+        .qr-title { color: #000; font-size: 18px; margin-bottom: 20px; }
+        #qrcode, #receiveQrcode { margin: 0 auto 20px; display: inline-block; }
+        .qr-address { background: #f5f5f5; padding: 12px; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 12px; color: #000; word-break: break-all; margin-bottom: 20px; }
+        .notification { position: fixed; bottom: 20px; right: 20px; background: #00ff88; color: #000; padding: 16px 24px; border-radius: 12px; font-weight: 600; animation: slideIn 0.3s ease-out; display: none; z-index: 2000; max-width: 400px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); }
+        .notification.error { background: #ff6b6b; color: #fff; }
+        .notification.warning { background: #ffa500; color: #000; }
+        .notification.info { background: #3498db; color: #fff; }
+        .notification.success { background: #00ff88; color: #000; }
+        
+        /* Import tab styles */
+        .import-tab-content { display: none; }
+        .seed-phrase-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px; }
+        .seed-input { width: 100%; padding: 10px; text-align: center; font-size: 14px; font-family: monospace; border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 8px; background: rgba(255, 255, 255, 0.05); color: white; transition: all 0.3s; }
+        .seed-input:focus { outline: none; border-color: #00ff88; background: rgba(255, 255, 255, 0.08); transform: scale(1.05); }
+        .seed-input::placeholder { color: rgba(255, 255, 255, 0.3); font-size: 12px; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.2); opacity: 0.8; } }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(100px); } to { opacity: 1; transform: translateX(0); } }
+        
+        @media (max-width: 968px) { 
+            .main-content { grid-template-columns: 1fr; } 
+            .main-header { flex-direction: column; gap: 20px; }
+            .nav-links { flex-wrap: wrap; justify-content: center; }
+        }
+        @media (max-width: 768px) { 
+            .stats-section { grid-template-columns: 1fr; } 
+            .wallet-section { padding: 24px; } 
+            .balance-amount { font-size: 36px; }
+            .transaction-item { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .transaction-amount { align-self: flex-end; }
+            .seed-phrase-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        }
+        @media (max-width: 480px) {
+            .seed-phrase-grid { grid-template-columns: repeat(2, 1fr); gap: 6px; }
         }
     </style>
 </head>
 <body>
-    <div class="animated-bg" id="animatedBg"></div>
-
-    <div class="container">
-        <!-- Login Screen -->
-        <div id="loginScreen">
-            <div class="logo">
-                <div class="logo-icon">🔐</div>
-                <h1>Quantum Wallet</h1>
-                <p class="subtitle">Secure Quantum-Resistant Blockchain</p>
-            </div>
-
-            <div id="loginForm">
-                <div class="input-group">
-                    <label for="walletAddress">Wallet Address</label>
-                    <input type="text" id="walletAddress" placeholder="Enter your QRC wallet address" autocomplete="off">
-                </div>
-
-                <div class="input-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" placeholder="Enter your password" autocomplete="off">
-                </div>
-
-                <div class="input-group">
-                    <label for="2fa">Google Authenticator Code</label>
-                    <div class="two-fa-input">
-                        <input type="text" id="2fa1" maxlength="1" pattern="\d" autocomplete="off">
-                        <input type="text" id="2fa2" maxlength="1" pattern="\d" autocomplete="off">
-                        <input type="text" id="2fa3" maxlength="1" pattern="\d" autocomplete="off">
-                        <input type="text" id="2fa4" maxlength="1" pattern="\d" autocomplete="off">
-                        <input type="text" id="2fa5" maxlength="1" pattern="\d" autocomplete="off">
-                        <input type="text" id="2fa6" maxlength="1" pattern="\d" autocomplete="off">
-                    </div>
-                </div>
-
-                <button class="button" onclick="login()">
-                    <span>🔓</span>
-                    <span>Login to Wallet</span>
-                </button>
-
-                <div class="divider">
-                    <span>OR</span>
-                </div>
-
-                <button class="button button-secondary" onclick="showCreateWallet()">
-                    <span>✨</span>
-                    <span>Create New Wallet</span>
-                </button>
-
-                <button class="button button-secondary" onclick="showImportWallet()">
-                    <span>📥</span>
-                    <span>Import Existing Wallet</span>
-                </button>
-            </div>
-
-            <!-- Create Wallet Form -->
-            <div id="createWalletForm" style="display: none;">
-                <div class="input-group">
-                    <label for="newPassword">Create Password</label>
-                    <input type="password" id="newPassword" placeholder="Minimum 8 characters" autocomplete="off">
-                    <div class="password-strength">
-                        <div id="passwordStrengthBar" class="password-strength-bar"></div>
-                    </div>
-                </div>
-
-                <div class="input-group">
-                    <label for="confirmPassword">Confirm Password</label>
-                    <input type="password" id="confirmPassword" placeholder="Re-enter your password" autocomplete="off">
-                </div>
-
-                <button class="button" onclick="createWallet()">
-                    <span>✨</span>
-                    <span>Generate Quantum Wallet</span>
-                </button>
-
-                <button class="button button-secondary" onclick="backToLogin()">
-                    <span>←</span>
-                    <span>Back to Login</span>
-                </button>
-            </div>
-
-            <!-- Import Wallet Form -->
-            <div id="importWalletForm" style="display: none;">
-                <div class="tab-buttons">
-                    <button class="tab-button active" onclick="showImportTab('code', this)">Import with Code</button>
-                    <button class="tab-button" onclick="showImportTab('seed', this)">Import with Seed Phrase</button>
-                </div>
-
-                <!-- Import with Code Tab -->
-                <div id="importCodeTab" class="import-tab-content" style="display: block;">
-                    <div class="input-group">
-                        <label for="importCode">Import Code</label>
-                        <input type="text" id="importCode" placeholder="Enter your wallet import code" autocomplete="off">
-                    </div>
-
-                    <div class="input-group">
-                        <label for="importCodePassword">Password</label>
-                        <input type="password" id="importCodePassword" placeholder="Enter your password" autocomplete="off">
-                    </div>
-
-                    <div class="input-group">
-                        <label for="importCode2FA">Google Authenticator Code</label>
-                        <div class="two-fa-input">
-                            <input type="text" id="importCode1" maxlength="1" pattern="\d" autocomplete="off">
-                            <input type="text" id="importCode2" maxlength="1" pattern="\d" autocomplete="off">
-                            <input type="text" id="importCode3" maxlength="1" pattern="\d" autocomplete="off">
-                            <input type="text" id="importCode4" maxlength="1" pattern="\d" autocomplete="off">
-                            <input type="text" id="importCode5" maxlength="1" pattern="\d" autocomplete="off">
-                            <input type="text" id="importCode6" maxlength="1" pattern="\d" autocomplete="off">
-                        </div>
-                    </div>
-
-                    <button class="button" onclick="importWithCode()">
-                        <span>📥</span>
-                        <span>Import Wallet</span>
-                    </button>
-                </div>
-
-                <!-- Import with Seed Tab -->
-                <div id="importSeedTab" class="import-tab-content">
-                    <div class="input-group">
-                        <label>24-Word Seed Phrase</label>
-                        <div class="seed-phrase-input">
-                            <div class="seed-input">
-                                <span>1.</span>
-                                <input type="text" id="seed1" placeholder="word" autocomplete="off">
-                            </div>
-                            <div class="seed-input">
-                                <span>2.</span>
-                                <input type="text" id="seed2" placeholder="word" autocomplete="off">
-                            </div>
-                            <div class="seed-input">
-                                <span>3.</span>
-                                <input type="text" id="seed3" placeholder="word" autocomplete="off">
-                            </div>
-                            <div class="seed-input">
-                                <span>4.</span>
-                                <input type="text" id="seed4" placeholder="word" autocomplete="off">
-                            </div>
-                            <div class="seed-input">
-                                <span>5.</span>
-                                <input type="text" id="seed5" placeholder="word" autocomplete="off">
-                            </div>
-                            <div class="seed-input">
-                                <span>6.</span>
-                                <input type="text" id="seed6" placeholder="word" autocomplete="off">
-                            </div>
-                            <div class="seed-input">
-                                <span>7.</span>
-                                <input type="text" id="seed7" placeholder="word" autocomplete="off">
-                            </div>
-                            <div class="seed-input">
-                                <span>8.</span>
-                                <input type="text" id="seed8" placeholder="word" autocomplete="off">
-                            </div>
-                            <div class="seed-input">
-                                <span>9.</span>
-                                <input type="text" id="seed9" placeholder="word" autocomplete="off">
-                            </div>
-                            <div class="seed-input">
-                                <span>10.</span>
-                                <input type="text" id="seed10" placeholder="word" autocomplete="off">
-                            </div>
-                            <div class="seed-input">
-                                <span>11.</span>
-                                <input type="text" id="seed11" placeholder="word" autocomplete="off">
-                            </div>
-                            <div class="seed-input">
-                                <span>12.</span>
-                                <input type="text" id="seed12" placeholder="word" autocomplete="off">
-                            </div>
-                            <div class="seed-input">
-                                <span>13.</span>
-                                <input type="text" id="seed13" placeholder="word" autocomplete="off">
-                            </div>
-                            <div class="seed-input">
-                                <span>14.</span>
-                                <input type="text" id="seed14" placeholder="word" autocomplete="off">
-                            </div>
-                            <div class="seed-input">
-                                <span>15.</span>
-                                <input type="text" id="seed15" placeholder="word" autocomplete="off">
-                            </div>
-                            <div class="seed-input">
-                                <span>16.</span>
-                                <input type="text" id="seed16" placeholder="word" autocomplete="off">
-                            </div>
-                            <div class="seed-input">
-                                <span>17.</span>
-                                <input type="text" id="seed17" placeholder="word" autocomplete="off">
-                            </div>
-                            <div class="seed-input">
-                                <span>18.</span>
-                                <input type="text" id="seed18" placeholder="word" autocomplete="off">
-                            </div>
-                            <div class="seed-input">
-                                <span>19.</span>
-                                <input type="text" id="seed19" placeholder="word" autocomplete="off">
-                            </div>
-                            <div class="seed-input">
-                                <span>20.</span>
-                                <input type="text" id="seed20" placeholder="word" autocomplete="off">
-                            </div>
-                            <div class="seed-input">
-                                <span>21.</span>
-                                <input type="text" id="seed21" placeholder="word" autocomplete="off">
-                            </div>
-                            <div class="seed-input">
-                                <span>22.</span>
-                                <input type="text" id="seed22" placeholder="word" autocomplete="off">
-                            </div>
-                            <div class="seed-input">
-                                <span>23.</span>
-                                <input type="text" id="seed23" placeholder="word" autocomplete="off">
-                            </div>
-                            <div class="seed-input">
-                                <span>24.</span>
-                                <input type="text" id="seed24" placeholder="word" autocomplete="off">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="input-group">
-                        <label for="importSeedPassword">Password</label>
-                        <input type="password" id="importSeedPassword" placeholder="Enter your password" autocomplete="off">
-                    </div>
-
-                    <div class="input-group">
-                        <label for="importSeed2FA">Google Authenticator Code</label>
-                        <div class="two-fa-input">
-                            <input type="text" id="importSeedCode1" maxlength="1" pattern="\d" autocomplete="off">
-                            <input type="text" id="importSeedCode2" maxlength="1" pattern="\d" autocomplete="off">
-                            <input type="text" id="importSeedCode3" maxlength="1" pattern="\d" autocomplete="off">
-                            <input type="text" id="importSeedCode4" maxlength="1" pattern="\d" autocomplete="off">
-                            <input type="text" id="importSeedCode5" maxlength="1" pattern="\d" autocomplete="off">
-                            <input type="text" id="importSeedCode6" maxlength="1" pattern="\d" autocomplete="off">
-                        </div>
-                    </div>
-
-                    <button class="button" onclick="importWithSeedPhrase()">
-                        <span>📥</span>
-                        <span>Import Wallet</span>
-                    </button>
-                </div>
-
-                <button class="button button-secondary" onclick="backToLogin()">
-                    <span>←</span>
-                    <span>Back to Login</span>
-                </button>
-            </div>
+    <!-- Login Screen -->
+    <div class="login-container" id="loginScreen">
+        <div class="login-logo">
+            <div class="logo">QRC</div>
         </div>
-
-        <!-- Wallet Screen -->
-        <div id="walletScreen" style="display: none;" class="wallet-container">
-            <div class="wallet-header">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <h2 style="font-size: 20px; margin-bottom: 8px;">Quantum Wallet</h2>
-                        <div class="address-display" id="addressDisplay">Loading...</div>
-                    </div>
-                    <div style="display: flex; gap: 12px;">
-                        <button class="action-button" onclick="showQRModal()" title="Show QR Code" style="width: 48px; height: 48px; padding: 0;">
-                            <span>📱</span>
-                        </button>
-                        <button class="action-button" onclick="copyAddress()" title="Copy Address" style="width: 48px; height: 48px; padding: 0;">
-                            <span>📋</span>
-                        </button>
-                        <button class="action-button" onclick="logout()" title="Logout" style="width: 48px; height: 48px; padding: 0;">
-                            <span>🚪</span>
+        <h1 class="login-title">Quantum Wallet</h1>
+        <p class="login-subtitle">Secure access to your quantum-resistant blockchain</p>
+        
+        <div class="error-message" id="loginError"></div>
+        <div class="success-message" id="loginSuccess"></div>
+        
+        <div id="loginForm">
+            <div class="input-group">
+                <label class="input-label">Wallet Password</label>
+                <div class="password-toggle">
+                    <input type="password" class="input-field" id="walletPassword" placeholder="Enter your secure password" autocomplete="new-password">
+                    <button class="password-toggle-btn" onclick="togglePassword('walletPassword')">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="input-group" id="login2FAField" style="display: none;">
+                <label class="input-label">Google Authenticator Code</label>
+                <div class="code-input-container">
+                    <input type="text" class="code-input" id="code1" maxlength="1" oninput="moveToNext(this, 'code2')" autocomplete="off">
+                    <input type="text" class="code-input" id="code2" maxlength="1" oninput="moveToNext(this, 'code3')" autocomplete="off">
+                    <input type="text" class="code-input" id="code3" maxlength="1" oninput="moveToNext(this, 'code4')" autocomplete="off">
+                    <input type="text" class="code-input" id="code4" maxlength="1" oninput="moveToNext(this, 'code5')" autocomplete="off">
+                    <input type="text" class="code-input" id="code5" maxlength="1" oninput="moveToNext(this, 'code6')" autocomplete="off">
+                    <input type="text" class="code-input" id="code6" maxlength="1" oninput="moveToNext(this, '')" autocomplete="off">
+                </div>
+            </div>
+            
+            <button class="button button-primary" onclick="attemptLogin()">
+                <span>🔐</span>
+                <span>Unlock Wallet</span>
+            </button>
+            
+            <button class="button button-secondary" onclick="showCreateNewWallet()">
+                <span>✨</span>
+                <span>Create New Wallet</span>
+            </button>
+            
+            <button class="button button-secondary" onclick="showImportWallet()">
+                <span>📥</span>
+                <span>Import Existing Wallet</span>
+            </button>
+        </div>
+        
+        <div id="createWalletForm" style="display: none;">
+            <div class="input-group">
+                <label class="input-label">Create Password (min 8 characters)</label>
+                <div class="password-toggle">
+                    <input type="password" class="input-field" id="newPassword" placeholder="Create a strong password" autocomplete="new-password">
+                    <button class="password-toggle-btn" onclick="togglePassword('newPassword')">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="input-group">
+                <label class="input-label">Confirm Password</label>
+                <div class="password-toggle">
+                    <input type="password" class="input-field" id="confirmPassword" placeholder="Confirm your password" autocomplete="new-password">
+                    <button class="password-toggle-btn" onclick="togglePassword('confirmPassword')">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <button class="button button-primary" onclick="createNewWallet()">
+                <span>🚀</span>
+                <span>Create Secure Wallet</span>
+            </button>
+            
+            <button class="button button-secondary" onclick="backToLogin()">
+                <span>←</span>
+                <span>Back to Login</span>
+            </button>
+        </div>
+        
+        <div id="importWalletForm" style="display: none;">
+            <div style="margin-bottom: 20px;">
+                <div class="tabs" style="margin-bottom: 20px;">
+                    <div class="tab active" onclick="showImportTab('code', this)">Import with Code</div>
+                    <div class="tab" onclick="showImportTab('seed', this)">Import with Seed Phrase</div>
+                </div>
+            </div>
+            
+            <!-- Import with Code Tab -->
+            <div id="importCodeTab" class="import-tab-content" style="display: block;">
+                <div class="input-group">
+                    <label class="input-label">Import Code</label>
+                    <input type="text" class="input-field" id="importCode" placeholder="Enter your import code" autocomplete="off">
+                </div>
+                
+                <div class="input-group">
+                    <label class="input-label">New Password for QRC Wallet</label>
+                    <div class="password-toggle">
+                        <input type="password" class="input-field" id="importCodePassword" placeholder="Create password for this device" autocomplete="new-password">
+                        <button class="password-toggle-btn" onclick="togglePassword('importCodePassword')">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                            </svg>
                         </button>
                     </div>
                 </div>
+                
+                <div class="input-group" id="importCode2FAField" style="display: none;">
+                    <label class="input-label">Google Authenticator Code</label>
+                    <div class="code-input-container">
+                        <input type="text" class="code-input" id="importCode1" maxlength="1" oninput="moveToNext(this, 'importCode2')" autocomplete="off">
+                        <input type="text" class="code-input" id="importCode2" maxlength="1" oninput="moveToNext(this, 'importCode3')" autocomplete="off">
+                        <input type="text" class="code-input" id="importCode3" maxlength="1" oninput="moveToNext(this, 'importCode4')" autocomplete="off">
+                        <input type="text" class="code-input" id="importCode4" maxlength="1" oninput="moveToNext(this, 'importCode5')" autocomplete="off">
+                        <input type="text" class="code-input" id="importCode5" maxlength="1" oninput="moveToNext(this, 'importCode6')" autocomplete="off">
+                        <input type="text" class="code-input" id="importCode6" maxlength="1" oninput="moveToNext(this, '')" autocomplete="off">
+                    </div>
+                </div>
+                
+                <button class="button button-primary" onclick="importWithCode()">
+                    <span>📥</span>
+                    <span>Import with Code</span>
+                </button>
+            </div>
+            
+            <!-- Import with Seed Phrase Tab -->
+            <div id="importSeedTab" class="import-tab-content" style="display: none;">
+                <div class="input-group">
+                    <label class="input-label">24-Word Seed Phrase</label>
+                    <div class="seed-phrase-grid">
+                        <input type="text" class="seed-input" placeholder="1" id="seed1" oninput="moveToNextSeed(this, 1)" autocomplete="off">
+                        <input type="text" class="seed-input" placeholder="2" id="seed2" oninput="moveToNextSeed(this, 2)" autocomplete="off">
+                        <input type="text" class="seed-input" placeholder="3" id="seed3" oninput="moveToNextSeed(this, 3)" autocomplete="off">
+                        <input type="text" class="seed-input" placeholder="4" id="seed4" oninput="moveToNextSeed(this, 4)" autocomplete="off">
+                        <input type="text" class="seed-input" placeholder="5" id="seed5" oninput="moveToNextSeed(this, 5)" autocomplete="off">
+                        <input type="text" class="seed-input" placeholder="6" id="seed6" oninput="moveToNextSeed(this, 6)" autocomplete="off">
+                        <input type="text" class="seed-input" placeholder="7" id="seed7" oninput="moveToNextSeed(this, 7)" autocomplete="off">
+                        <input type="text" class="seed-input" placeholder="8" id="seed8" oninput="moveToNextSeed(this, 8)" autocomplete="off">
+                        <input type="text" class="seed-input" placeholder="9" id="seed9" oninput="moveToNextSeed(this, 9)" autocomplete="off">
+                        <input type="text" class="seed-input" placeholder="10" id="seed10" oninput="moveToNextSeed(this, 10)" autocomplete="off">
+                        <input type="text" class="seed-input" placeholder="11" id="seed11" oninput="moveToNextSeed(this, 11)" autocomplete="off">
+                        <input type="text" class="seed-input" placeholder="12" id="seed12" oninput="moveToNextSeed(this, 12)" autocomplete="off">
+                        <input type="text" class="seed-input" placeholder="13" id="seed13" oninput="moveToNextSeed(this, 13)" autocomplete="off">
+                        <input type="text" class="seed-input" placeholder="14" id="seed14" oninput="moveToNextSeed(this, 14)" autocomplete="off">
+                        <input type="text" class="seed-input" placeholder="15" id="seed15" oninput="moveToNextSeed(this, 15)" autocomplete="off">
+                        <input type="text" class="seed-input" placeholder="16" id="seed16" oninput="moveToNextSeed(this, 16)" autocomplete="off">
+                        <input type="text" class="seed-input" placeholder="17" id="seed17" oninput="moveToNextSeed(this, 17)" autocomplete="off">
+                        <input type="text" class="seed-input" placeholder="18" id="seed18" oninput="moveToNextSeed(this, 18)" autocomplete="off">
+                        <input type="text" class="seed-input" placeholder="19" id="seed19" oninput="moveToNextSeed(this, 19)" autocomplete="off">
+                        <input type="text" class="seed-input" placeholder="20" id="seed20" oninput="moveToNextSeed(this, 20)" autocomplete="off">
+                        <input type="text" class="seed-input" placeholder="21" id="seed21" oninput="moveToNextSeed(this, 21)" autocomplete="off">
+                        <input type="text" class="seed-input" placeholder="22" id="seed22" oninput="moveToNextSeed(this, 22)" autocomplete="off">
+                        <input type="text" class="seed-input" placeholder="23" id="seed23" oninput="moveToNextSeed(this, 23)" autocomplete="off">
+                        <input type="text" class="seed-input" placeholder="24" id="seed24" oninput="moveToNextSeed(this, 24)" autocomplete="off">
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label class="input-label">New Password for QRC Wallet</label>
+                    <div class="password-toggle">
+                        <input type="password" class="input-field" id="importSeedPassword" placeholder="Create password for this device" autocomplete="new-password">
+                        <button class="password-toggle-btn" onclick="togglePassword('importSeedPassword')">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="input-group" id="importSeed2FAField" style="display: none;">
+                    <label class="input-label">Google Authenticator Code (if enabled)</label>
+                    <div class="code-input-container">
+                        <input type="text" class="code-input" id="importSeedCode1" maxlength="1" oninput="moveToNext(this, 'importSeedCode2')" autocomplete="off">
+                        <input type="text" class="code-input" id="importSeedCode2" maxlength="1" oninput="moveToNext(this, 'importSeedCode3')" autocomplete="off">
+                        <input type="text" class="code-input" id="importSeedCode3" maxlength="1" oninput="moveToNext(this, 'importSeedCode4')" autocomplete="off">
+                        <input type="text" class="code-input" id="importSeedCode4" maxlength="1" oninput="moveToNext(this, 'importSeedCode5')" autocomplete="off">
+                        <input type="text" class="code-input" id="importSeedCode5" maxlength="1" oninput="moveToNext(this, 'importSeedCode6')" autocomplete="off">
+                        <input type="text" class="code-input" id="importSeedCode6" maxlength="1" oninput="moveToNext(this, '')" autocomplete="off">
+                    </div>
+                </div>
+                
+                <button class="button button-primary" onclick="importWithSeedPhrase()">
+                    <span>📥</span>
+                    <span>Import with Seed Phrase</span>
+                </button>
+            </div>
+            
+            <button class="button button-secondary" onclick="backToLogin()">
+                <span>←</span>
+                <span>Back to Login</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div class="app-container" id="appContainer">
+        <header class="main-header">
+            <div class="logo-section">
+                <div class="logo">QRC</div>
+                <div class="logo-text">Quantum Wallet</div>
+            </div>
+            <div class="user-menu">
+                <div class="network-indicator">
+                    <div class="network-dot"></div>
+                    <span>Mainnet</span>
+                </div>
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">U</div>
+                    <span id="userDisplay">User</span>
+                </div>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="stats-section">
+                <div class="stat-card">
+                    <div class="stat-value" id="currentTPS">0</div>
+                    <div class="stat-label">Current TPS</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalBlocks">0</div>
+                    <div class="stat-label">Total Blocks</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalTransactions">0</div>
+                    <div class="stat-label">Transactions</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="activeUsers">0</div>
+                    <div class="stat-label">Active Users</div>
+                </div>
             </div>
 
-            <div class="balance-display">
-                <div class="balance-label">Total Balance</div>
-                <div class="balance-amount" id="balanceAmount">0.00 QRC</div>
-                <div class="balance-usd" id="balanceUSD">≈ $0.00 USD</div>
-            </div>
+            <div class="wallet-section">
+                <div class="wallet-header">
+                    <h2 class="wallet-title">Quantum Resistant Wallet</h2>
+                </div>
 
-            <div class="tabs">
-                <button class="tab active" onclick="showTab('wallet', this)">Wallet</button>
-                <button class="tab" onclick="showTab('activity', this)">Activity</button>
-                <button class="tab" onclick="showTab('security', this)">Security</button>
-            </div>
+                <div class="security-status">
+                    <span class="security-icon">🔒</span>
+                    <span>Secured with password + Google Authenticator + encryption</span>
+                </div>
 
-            <div id="walletTab" class="tab-content active">
-                <div class="wallet-actions">
-                    <button class="action-button" onclick="showSendModal()">
+                <div class="algorithm-badge">
+                    <div class="badge-icon">✓</div>
+                    <span>Protected by CRYSTALS-Dilithium</span>
+                </div>
+
+                <div class="wallet-display">
+                    <div class="wallet-label">Your Wallet Address</div>
+                    <div class="wallet-address-container">
+                        <div class="wallet-address" id="walletAddress" onclick="copyAddress()"></div>
+                        <div class="address-actions">
+                            <button class="menu-button" onclick="showQRModal()" title="Show QR Code">📱</button>
+                            <button class="menu-button" onclick="copyAddress()" title="Copy Address">📋</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="balance-display">
+                    <div class="balance-label">Total Balance</div>
+                    <div class="balance-amount" id="balanceAmount">0.00 QRC</div>
+                    <div class="balance-usd" id="balanceUSD">≈ $0.00 USD</div>
+                </div>
+
+                <div class="tabs">
+                    <div class="tab active" onclick="showTab('wallet', this)">Wallet</div>
+                    <div class="tab" onclick="showTab('history', this)">History</div>
+                    <div class="tab" onclick="showTab('settings', this)">Settings</div>
+                </div>
+
+                <div id="walletTab" class="tab-content active">
+                    <button class="button button-primary" onclick="showSendModal()">
                         <span>📤</span>
-                        <span>Send</span>
+                        <span>Send QRC</span>
                     </button>
-                    <button class="action-button" onclick="showReceiveModal()">
+                    <button class="button button-secondary" onclick="showReceiveModal()">
                         <span>📥</span>
                         <span>Receive</span>
                     </button>
-                    <button class="action-button" onclick="getFaucet()">
+                    <button class="button button-secondary" onclick="getFaucet()">
                         <span>💧</span>
-                        <span>Faucet</span>
+                        <span>Test Faucet (100 QRC daily)</span>
                     </button>
                 </div>
-            </div>
 
-            <div id="activityTab" class="tab-content">
-                <div class="transaction-list" id="transactionList">
-                    <p style="text-align: center; color: #666; padding: 40px;">No transactions yet</p>
-                </div>
-            </div>
-
-            <div id="securityTab" class="tab-content">
-                <div class="security-info">
-                    <div class="security-item">
-                        <span class="security-label">Encryption</span>
-                        <span class="security-value">Quantum-Resistant</span>
-                    </div>
-                    <div class="security-item">
-                        <span class="security-label">Algorithm</span>
-                        <span class="security-value">Dilithium3</span>
-                    </div>
-                    <div class="security-item">
-                        <span class="security-label">Two-Factor</span>
-                        <span class="security-value">Enabled</span>
-                    </div>
-                    <div class="security-item">
-                        <span class="security-label">Last Login</span>
-                        <span class="security-value" id="lastLogin">Just now</span>
+                <div id="historyTab" class="tab-content">
+                    <div id="transactionHistory">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📊</div>
+                            <p>No transactions yet</p>
+                            <p style="font-size: 14px; margin-top: 10px;">Your transaction history will appear here</p>
+                        </div>
                     </div>
                 </div>
 
-                <button class="button button-secondary" onclick="exportWallet()">
-                    <span>📤</span>
-                    <span>Export Wallet</span>
-                </button>
+                <div id="settingsTab" class="tab-content">
+                    <div style="background: rgba(255, 107, 107, 0.1); border: 1px solid #ff6b6b; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                        <h4 style="margin-bottom: 10px;">⚠️ Security Settings</h4>
+                        <p style="font-size: 14px; line-height: 1.6;">Your wallet is encrypted with your password. Never share your seed phrase or password with anyone.</p>
+                    </div>
+                    <button class="button button-secondary" onclick="showNotification('2FA setup coming soon!', 'info')">
+                        <span>🔐</span>
+                        <span>Setup Google Authenticator</span>
+                    </button>
+                    <button class="button button-secondary" onclick="showNotification('Export feature coming soon!', 'info')">
+                        <span>💾</span>
+                        <span>Export Seed Phrase</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Modals -->
-    <div id="sendModal" class="modal">
+    <div class="modal" id="sendModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title">Send QRC</h3>
-                <button class="close-button" onclick="closeModal('sendModal')">×</button>
+                <h2 class="modal-title">Send QRC</h2>
+                <button class="close-modal" onclick="closeModal('sendModal')">×</button>
             </div>
-
-            <div class="input-group">
-                <label for="recipientAddress">Recipient Address</label>
-                <input type="text" id="recipientAddress" placeholder="Enter recipient's QRC address" autocomplete="off">
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; color: #999; font-size: 14px;">Recipient Address</label>
+                <input type="text" id="recipientAddress" placeholder="QRC..." style="width: 100%; padding: 15px; border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 8px; background: rgba(255, 255, 255, 0.05); color: white; font-size: 16px;" autocomplete="off">
             </div>
-
-            <div class="input-group">
-                <label for="sendAmount">Amount</label>
-                <input type="number" id="sendAmount" placeholder="0.00" step="0.01" min="0" autocomplete="off">
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; color: #999; font-size: 14px;">Amount (QRC)</label>
+                <input type="number" id="sendAmount" placeholder="0.00" step="0.01" oninput="updateFeeDisplay()" style="width: 100%; padding: 15px; border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 8px; background: rgba(255, 255, 255, 0.05); color: white; font-size: 16px;" autocomplete="off">
             </div>
-
-            <div class="input-group">
-                <label for="sendPassword">Password</label>
-                <input type="password" id="sendPassword" placeholder="Enter your password" autocomplete="off">
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; color: #999; font-size: 14px;">Transaction Password</label>
+                <div class="password-toggle">
+                    <input type="password" id="sendPassword" placeholder="Enter your password" style="width: 100%; padding: 15px; border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 8px; background: rgba(255, 255, 255, 0.05); color: white; font-size: 16px;" autocomplete="new-password">
+                    <button class="password-toggle-btn" onclick="togglePassword('sendPassword')">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
-
-            <div class="input-group">
-                <label for="transaction2FA">Google Authenticator Code</label>
-                <div class="two-fa-input">
-                    <input type="text" id="transaction2FA1" maxlength="1" pattern="\d" autocomplete="off">
-                    <input type="text" id="transaction2FA2" maxlength="1" pattern="\d" autocomplete="off">
-                    <input type="text" id="transaction2FA3" maxlength="1" pattern="\d" autocomplete="off">
-                    <input type="text" id="transaction2FA4" maxlength="1" pattern="\d" autocomplete="off">
-                    <input type="text" id="transaction2FA5" maxlength="1" pattern="\d" autocomplete="off">
-                    <input type="text" id="transaction2FA6" maxlength="1" pattern="\d" autocomplete="off">
+            
+            <div style="background: rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                    <span>Network Fee:</span>
+                    <span id="feeDisplay">0.00 QRC</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-weight: 600;">
+                    <span>Total:</span>
+                    <span id="totalDisplay">0.00 QRC</span>
                 </div>
             </div>
 
-            <button class="button" onclick="sendTransaction()">
-                <span>📤</span>
-                <span>Send Transaction</span>
+            <button class="button button-primary" onclick="confirmSend()">
+                Sign & Send Transaction
             </button>
         </div>
     </div>
 
-    <div id="receiveModal" class="modal">
+    <div class="modal" id="receiveModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title">Receive QRC</h3>
-                <button class="close-button" onclick="closeModal('receiveModal')">×</button>
+                <h2 class="modal-title">Receive QRC</h2>
+                <button class="close-modal" onclick="closeModal('receiveModal')">×</button>
             </div>
-
-            <div class="qr-container" id="receiveQrcode"></div>
             
-            <div class="address-display" id="receiveAddress" style="margin: 20px 0;">Loading...</div>
-
-            <button class="button button-secondary" onclick="copyAddress()">
-                <span>📋</span>
-                <span>Copy Address</span>
-            </button>
+            <div class="qr-container">
+                <h3 class="qr-title">Your QRC Address</h3>
+                <div id="receiveQrcode"></div>
+                <div class="qr-address" id="receiveAddress"></div>
+                <button class="button button-secondary" onclick="copyAddress()">Copy Address</button>
+            </div>
         </div>
     </div>
 
-    <div id="qrModal" class="modal">
+    <div class="modal" id="qrModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title">Wallet QR Code</h3>
-                <button class="close-button" onclick="closeModal('qrModal')">×</button>
+                <h2 class="modal-title">QR Code</h2>
+                <button class="close-modal" onclick="closeModal('qrModal')">×</button>
             </div>
-
-            <div class="qr-container" id="qrcode"></div>
             
-            <div class="address-display" id="qrAddress" style="margin: 20px 0;">Loading...</div>
-
-            <button class="button button-secondary" onclick="copyAddress()">
-                <span>📋</span>
-                <span>Copy Address</span>
-            </button>
+            <div class="qr-container">
+                <h3 class="qr-title">Scan to Send QRC</h3>
+                <div id="qrcode"></div>
+                <div class="qr-address" id="qrAddress"></div>
+                <button class="button button-secondary" onclick="copyAddress()">Copy Address</button>
+            </div>
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <div class="notification" id="notification"></div>
+
     <script>
         // Global state
         let walletState = {
-            address: '',
+            address: null,
+            seedPhrase: null,
             balance: 0,
-            transactions: [],
-            activityLog: []
+            encryptedData: null,
+            isLoggedIn: false,
+            transactions: []
         };
-
+        
+        let sessionPassword = null;
         let qrcode = null;
         let receiveQrcode = null;
 
-        // Initialize background animation
-        function initBackground() {
-            const bg = document.getElementById('animatedBg');
-            for (let i = 0; i < 50; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'particle';
-                particle.style.left = Math.random() * 100 + '%';
-                particle.style.animationDelay = Math.random() * 20 + 's';
-                particle.style.animationDuration = (15 + Math.random() * 10) + 's';
-                bg.appendChild(particle);
-            }
-        }
-
-        // 2FA input handling
-        function setupTwoFAInputs() {
-            const setupGroup = (prefix, count = 6) => {
-                for (let i = 1; i <= count; i++) {
-                    const input = document.getElementById(prefix + i);
-                    if (!input) continue;
-                    
-                    input.addEventListener('input', function(e) {
-                        if (e.target.value.length === 1 && i < count) {
-                            document.getElementById(prefix + (i + 1))?.focus();
-                        }
-                    });
-                    
-                    input.addEventListener('keydown', function(e) {
-                        if (e.key === 'Backspace' && e.target.value === '' && i > 1) {
-                            document.getElementById(prefix + (i - 1))?.focus();
-                        }
-                    });
+        // 6-digit code input helper
+        function moveToNext(current, nextFieldId) {
+            if (current.value.length >= current.maxLength) {
+                if (nextFieldId && document.getElementById(nextFieldId)) {
+                    document.getElementById(nextFieldId).focus();
+                } else {
+                    // If it's the last field, trigger login
+                    if (current.id === 'code6') {
+                        attemptLogin();
+                    }
                 }
-            };
-            
-            setupGroup('2fa');
-            setupGroup('importCode');
-            setupGroup('importSeedCode');
-            setupGroup('transaction2FA');
-        }
-
-        // Password strength checker
-        function checkPasswordStrength(password) {
-            const strengthBar = document.getElementById('passwordStrengthBar');
-            if (!strengthBar) return;
-            
-            let strength = 0;
-            if (password.length >= 8) strength++;
-            if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength++;
-            if (password.match(/[0-9]/)) strength++;
-            if (password.match(/[^a-zA-Z0-9]/)) strength++;
-            
-            strengthBar.className = 'password-strength-bar';
-            if (strength <= 1) {
-                strengthBar.classList.add('strength-weak');
-            } else if (strength === 2) {
-                strengthBar.classList.add('strength-medium');
-            } else {
-                strengthBar.classList.add('strength-strong');
+            }
+            // Handle backspace
+            if (current.value.length === 0 && event.inputType === 'deleteContentBackward') {
+                const currentNum = parseInt(current.id.replace('code', ''));
+                if (currentNum > 1) {
+                    document.getElementById(`code${currentNum - 1}`).focus();
+                }
             }
         }
 
-        // Navigation functions
-        function showCreateWallet() {
+        // Utility functions
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = 'notification ' + type;
+            notification.style.display = 'block';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 4000);
+        }
+
+        function togglePassword(fieldId) {
+            const input = document.getElementById(fieldId);
+            const toggle = input.nextElementSibling;
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                toggle.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/></svg>';
+            } else {
+                input.type = 'password';
+                toggle.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>';
+            }
+        }
+
+        function showError(message) {
+            document.getElementById('loginError').textContent = message;
+            document.getElementById('loginError').style.display = 'block';
+            setTimeout(() => {
+                document.getElementById('loginError').style.display = 'none';
+            }, 5000);
+        }
+
+        function showSuccess(message) {
+            document.getElementById('loginSuccess').textContent = message;
+            document.getElementById('loginSuccess').style.display = 'block';
+            setTimeout(() => {
+                document.getElementById('loginSuccess').style.display = 'none';
+            }, 5000);
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // Login functions
+        function attemptLogin() {
+            const password = document.getElementById('walletPassword').value;
+            
+            if (!password) {
+                showError('Please enter your password');
+                return;
+            }
+            
+            const encryptedWallet = localStorage.getItem('qrcWalletEncrypted');
+            if (!encryptedWallet) {
+                showError('No wallet found. Please create a new wallet.');
+                return;
+            }
+            
+            try {
+                // Decrypt wallet data
+                const decrypted = CryptoJS.AES.decrypt(encryptedWallet, password);
+                const decryptedStr = decrypted.toString(CryptoJS.enc.Utf8);
+                
+                if (!decryptedStr) {
+                    showError('Invalid password');
+                    return;
+                }
+                
+                walletState = JSON.parse(decryptedStr);
+                
+                // Check if 2FA is required
+                if (walletState.twoFactorEnabled) {
+                    if (document.getElementById('login2FAField').style.display === 'none') {
+                        document.getElementById('login2FAField').style.display = 'block';
+                        document.getElementById('code1').focus();
+                        return;
+                    }
+                    
+                    // Get code from 6 inputs
+                    let code = '';
+                    for (let i = 1; i <= 6; i++) {
+                        code += document.getElementById(`code${i}`).value;
+                    }
+                    
+                    if (code.length !== 6) {
+                        showError('Please enter the complete 6-digit code');
+                        return;
+                    }
+                    
+                    // Verify 2FA code here (simplified for demo)
+                    // In production, verify against TOTP
+                }
+                
+                walletState.isLoggedIn = true;
+                sessionPassword = password;
+                
+                // Show main app
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('appContainer').style.display = 'block';
+                
+                // Initialize app
+                initializeApp();
+                showNotification('Welcome back! Wallet unlocked successfully', 'success');
+                
+            } catch (error) {
+                showError('Invalid password or corrupted wallet data');
+            }
+        }
+
+        function showCreateNewWallet() {
             document.getElementById('loginForm').style.display = 'none';
             document.getElementById('createWalletForm').style.display = 'block';
-            document.getElementById('importWalletForm').style.display = 'none';
         }
 
         function showImportWallet() {
             document.getElementById('loginForm').style.display = 'none';
-            document.getElementById('createWalletForm').style.display = 'none';
             document.getElementById('importWalletForm').style.display = 'block';
         }
 
@@ -1259,18 +742,81 @@
             document.getElementById('loginForm').style.display = 'block';
             document.getElementById('createWalletForm').style.display = 'none';
             document.getElementById('importWalletForm').style.display = 'none';
+            
+            // Reset to first tab
+            const firstTab = document.querySelector('#importWalletForm .tab');
+            if (firstTab) {
+                firstTab.click();
+            }
+            
+            // Hide 2FA fields
+            document.getElementById('importCode2FAField').style.display = 'none';
+            document.getElementById('importSeed2FAField').style.display = 'none';
+            
+            // Clear all fields
+            for (let i = 1; i <= 6; i++) {
+                if (document.getElementById(`code${i}`)) {
+                    document.getElementById(`code${i}`).value = '';
+                }
+            }
         }
 
+        function createNewWallet() {
+            const password = document.getElementById('newPassword').value;
+            const confirmPass = document.getElementById('confirmPassword').value;
+            
+            if (password.length < 8) {
+                showError('Password must be at least 8 characters');
+                return;
+            }
+            
+            if (password !== confirmPass) {
+                showError('Passwords do not match');
+                return;
+            }
+            
+            // Generate seed phrase
+            const seedPhrase = generateSeedPhrase();
+            
+            // Create wallet
+            walletState = {
+                address: 'QRC' + generateRandomString(32),
+                seedPhrase: seedPhrase,
+                balance: 1000,
+                transactions: [],
+                created: Date.now()
+            };
+            
+            // Encrypt and save
+            const encrypted = CryptoJS.AES.encrypt(JSON.stringify(walletState), password).toString();
+            localStorage.setItem('qrcWalletEncrypted', encrypted);
+            
+            showSuccess('Wallet created successfully! Please login.');
+            setTimeout(() => {
+                backToLogin();
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmPassword').value = '';
+            }, 2000);
+        }
+
+        function importExistingWallet() {
+            // This is now replaced by importWithSeedPhrase
+            importWithSeedPhrase();
+        }
+        
         function showImportTab(tabName, element) {
-            document.querySelectorAll('#importWalletForm .tab-button').forEach(tab => {
+            // Update tab styles
+            document.querySelectorAll('#importWalletForm .tab').forEach(tab => {
                 tab.classList.remove('active');
             });
             element.classList.add('active');
             
+            // Hide all import tabs
             document.querySelectorAll('.import-tab-content').forEach(content => {
                 content.style.display = 'none';
             });
             
+            // Show selected tab
             if (tabName === 'code') {
                 document.getElementById('importCodeTab').style.display = 'block';
             } else {
@@ -1278,117 +824,18 @@
             }
         }
 
-        // Notification system
-        function showNotification(message, type = 'success') {
-            const notification = document.createElement('div');
-            notification.className = `notification ${type}`;
-            notification.innerHTML = `
-                <span style="font-size: 20px;">${type === 'success' ? '✓' : '⚠️'}</span>
-                <span>${message}</span>
-            `;
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.style.opacity = '0';
-                setTimeout(() => notification.remove(), 300);
-            }, 3000);
-        }
-
-        function showError(message) {
-            showNotification(message, 'error');
-        }
-
-        function showSuccess(message) {
-            showNotification(message, 'success');
-        }
-
-        // Auth functions
-        async function login() {
-            const address = document.getElementById('walletAddress').value;
-            const password = document.getElementById('password').value;
-            
-            if (!address) {
-                showError('Please enter your wallet address');
-                return;
-            }
-            
-            if (password.length < 8) {
-                showError('Password must be at least 8 characters');
-                return;
-            }
-            
-            let twoFACode = '';
-            for (let i = 1; i <= 6; i++) {
-                twoFACode += document.getElementById(`2fa${i}`).value;
-            }
-            
-            if (twoFACode.length !== 6) {
-                showError('Please enter the complete 6-digit Google Authenticator code');
-                return;
-            }
-            
-            try {
-                const response = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ address, password, twoFA: twoFACode })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    walletState.address = address;
-                    walletState.balance = data.balance || 0;
-                    showWallet();
-                    addActivity('login', 'Login', { device: navigator.userAgent });
-                    showSuccess('Welcome back!');
-                } else {
-                    showError(data.error || 'Login failed');
+        function moveToNextSeed(current, currentIndex) {
+            // Auto-advance on space or when word looks complete
+            if (current.value.includes(' ') || (current.value.length > 3 && event.inputType !== 'deleteContentBackward')) {
+                current.value = current.value.trim();
+                if (currentIndex < 24) {
+                    document.getElementById(`seed${currentIndex + 1}`).focus();
                 }
-            } catch (error) {
-                console.error('Login error:', error);
-                showError('Network error. Please try again.');
-            }
-        }
-
-        async function createWallet() {
-            const password = document.getElementById('newPassword').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-            
-            if (password.length < 8) {
-                showError('Password must be at least 8 characters');
-                return;
             }
             
-            if (password !== confirmPassword) {
-                showError('Passwords do not match');
-                return;
-            }
-            
-            try {
-                const response = await fetch('/api/create-wallet', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ password })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    walletState.address = data.address;
-                    walletState.balance = 0;
-                    showWallet();
-                    addActivity('security', 'Wallet Created', { message: 'New wallet generated' });
-                    showSuccess('Wallet created successfully!');
-                    
-                    // Show seed phrase modal or download backup
-                    alert(`Important: Save your seed phrase:\n\n${data.seedPhrase}\n\nStore this securely!`);
-                } else {
-                    showError(data.error || 'Failed to create wallet');
-                }
-            } catch (error) {
-                console.error('Create wallet error:', error);
-                showError('Network error. Please try again.');
+            // Handle backspace
+            if (current.value.length === 0 && event.inputType === 'deleteContentBackward' && currentIndex > 1) {
+                document.getElementById(`seed${currentIndex - 1}`).focus();
             }
         }
 
@@ -1406,6 +853,14 @@
                 return;
             }
             
+            // Check if 2FA is needed
+            if (document.getElementById('importCode2FAField').style.display === 'none') {
+                document.getElementById('importCode2FAField').style.display = 'block';
+                document.getElementById('importCode1').focus();
+                return;
+            }
+            
+            // Get 2FA code
             let twoFACode = '';
             for (let i = 1; i <= 6; i++) {
                 twoFACode += document.getElementById(`importCode${i}`).value;
@@ -1416,12 +871,33 @@
                 return;
             }
             
-            // Import logic here
+            // Process import with code
+            walletState = {
+                address: 'QRC' + generateAddressFromCode(importCode),
+                seedPhrase: ['imported', 'with', 'code'],
+                balance: 0,
+                transactions: [],
+                imported: Date.now(),
+                importMethod: 'code'
+            };
+            
+            // Encrypt and save
+            const encrypted = CryptoJS.AES.encrypt(JSON.stringify(walletState), password).toString();
+            localStorage.setItem('qrcWalletEncrypted', encrypted);
+            
             showSuccess('Wallet imported successfully! Please login.');
-            setTimeout(() => backToLogin(), 2000);
+            setTimeout(() => {
+                backToLogin();
+                document.getElementById('importCode').value = '';
+                document.getElementById('importCodePassword').value = '';
+                for (let i = 1; i <= 6; i++) {
+                    document.getElementById(`importCode${i}`).value = '';
+                }
+            }, 2000);
         }
 
         function importWithSeedPhrase() {
+            // Collect seed phrase from 24 inputs
             const seedWords = [];
             for (let i = 1; i <= 24; i++) {
                 const word = document.getElementById(`seed${i}`).value.trim().toLowerCase();
@@ -1440,182 +916,333 @@
                 return;
             }
             
+            // Show 2FA field if not shown
+            if (document.getElementById('importSeed2FAField').style.display === 'none') {
+                document.getElementById('importSeed2FAField').style.display = 'block';
+                document.getElementById('importSeedCode1').focus();
+                showNotification('Enter Google Authenticator code if enabled on this wallet', 'info');
+                return;
+            }
+            
+            // Get 2FA code (optional for seed import)
             let twoFACode = '';
             for (let i = 1; i <= 6; i++) {
                 twoFACode += document.getElementById(`importSeedCode${i}`).value;
             }
             
-            if (twoFACode.length !== 6) {
-                showError('Please enter the complete 6-digit Google Authenticator code');
-                return;
-            }
+            // Import wallet
+            walletState = {
+                address: 'QRC' + generateAddressFromSeed(seedWords.join(' ')),
+                seedPhrase: seedWords,
+                balance: 0,
+                transactions: [],
+                imported: Date.now(),
+                importMethod: 'seed'
+            };
             
-            // Import logic here
+            // Encrypt and save
+            const encrypted = CryptoJS.AES.encrypt(JSON.stringify(walletState), password).toString();
+            localStorage.setItem('qrcWalletEncrypted', encrypted);
+            
             showSuccess('Wallet imported successfully! Please login.');
-            setTimeout(() => backToLogin(), 2000);
+            setTimeout(() => {
+                backToLogin();
+                for (let i = 1; i <= 24; i++) {
+                    document.getElementById(`seed${i}`).value = '';
+                }
+                document.getElementById('importSeedPassword').value = '';
+                for (let i = 1; i <= 6; i++) {
+                    document.getElementById(`importSeedCode${i}`).value = '';
+                }
+            }, 2000);
+        }
+
+        function generateAddressFromCode(code) {
+            // Generate address from import code
+            let hash = 0;
+            for (let i = 0; i < code.length; i++) {
+                hash = ((hash << 5) - hash) + code.charCodeAt(i);
+                hash = hash & hash;
+            }
+            return Math.abs(hash).toString(36).toUpperCase().padEnd(32, '0').substring(0, 32);
         }
 
         function logout() {
-            addActivity('login', 'Logout', { device: navigator.userAgent });
-            walletState = { address: '', balance: 0, transactions: [], activityLog: [] };
-            document.getElementById('loginScreen').style.display = 'block';
-            document.getElementById('walletScreen').style.display = 'none';
-            backToLogin();
-            showSuccess('Logged out successfully');
+            if (confirm('Are you sure you want to logout?')) {
+                walletState = {
+                    address: null,
+                    seedPhrase: null,
+                    balance: 0,
+                    isLoggedIn: false,
+                    transactions: []
+                };
+                sessionPassword = null;
+                
+                // Show login screen
+                document.getElementById('appContainer').style.display = 'none';
+                document.getElementById('loginScreen').style.display = 'block';
+                document.getElementById('walletPassword').value = '';
+                
+                showNotification('Logged out successfully', 'info');
+            }
+        }
+
+        // App initialization
+        function initializeApp() {
+            // Update UI with wallet info
+            document.getElementById('walletAddress').textContent = walletState.address;
+            document.getElementById('userAvatar').textContent = walletState.address.substring(3, 4).toUpperCase();
+            document.getElementById('userDisplay').textContent = walletState.address.substring(0, 8) + '...';
+            
+            // Update balance
+            updateBalanceDisplay();
+            
+            // Start real-time updates
+            startRealtimeUpdates();
+            
+            // Load initial data
+            updateStats();
+            loadTransactionHistory();
+        }
+
+        function startRealtimeUpdates() {
+            // Update balance every 5 seconds
+            setInterval(() => {
+                updateBalance();
+            }, 5000);
+            
+            // Update stats every 3 seconds
+            setInterval(() => {
+                updateStats();
+            }, 3000);
         }
 
         // Wallet functions
-        function showWallet() {
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('walletScreen').style.display = 'block';
-            
-            updateWalletDisplay();
-            loadTransactions();
-            loadActivityHistory();
+        function generateSeedPhrase() {
+            const words = ['abandon', 'ability', 'able', 'about', 'above', 'absent', 'absorb', 'abstract', 
+                          'absurd', 'abuse', 'access', 'accident', 'account', 'accuse', 'achieve', 'acid',
+                          'acoustic', 'acquire', 'across', 'act', 'action', 'actor', 'actress', 'actual'];
+            const phrase = [];
+            for (let i = 0; i < 24; i++) {
+                phrase.push(words[Math.floor(Math.random() * words.length)]);
+            }
+            return phrase;
         }
 
-        function updateWalletDisplay() {
-            document.getElementById('addressDisplay').textContent = walletState.address;
+        function generateRandomString(length) {
+            const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            let result = '';
+            for (let i = 0; i < length; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
+        }
+
+        function generateAddressFromSeed(seed) {
+            // Simple hash of seed for demo
+            let hash = 0;
+            for (let i = 0; i < seed.length; i++) {
+                hash = ((hash << 5) - hash) + seed.charCodeAt(i);
+                hash = hash & hash;
+            }
+            return Math.abs(hash).toString(36).toUpperCase().padEnd(32, '0').substring(0, 32);
+        }
+
+        function updateBalanceDisplay() {
             document.getElementById('balanceAmount').textContent = `${walletState.balance.toFixed(2)} QRC`;
-            document.getElementById('balanceUSD').textContent = `≈ $${(walletState.balance * 0.001).toFixed(2)} USD`;
+            document.getElementById('balanceUSD').textContent = `≈ ${(walletState.balance * 0.001).toFixed(2)} USD`;
+        }
+
+        function updateBalance() {
+            // In real app, fetch from blockchain
+            fetch(`/api/wallet/balance/${walletState.address}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        walletState.balance = data.balance;
+                        updateBalanceDisplay();
+                    }
+                })
+                .catch(() => {
+                    // Handle offline mode
+                });
+        }
+
+        function updateStats() {
+            // Simulate stats
+            document.getElementById('currentTPS').textContent = Math.floor(Math.random() * 1000 + 773);
+            document.getElementById('totalBlocks').textContent = (parseInt(document.getElementById('totalBlocks').textContent) + 1).toLocaleString();
+            document.getElementById('totalTransactions').textContent = (parseInt(document.getElementById('totalTransactions').textContent.replace(/,/g, '')) + Math.floor(Math.random() * 10)).toLocaleString();
+            document.getElementById('activeUsers').textContent = Math.floor(Math.random() * 500 + 1000).toLocaleString();
         }
 
         function showTab(tabName, element) {
-            document.querySelectorAll('.tabs .tab').forEach(tab => {
+            // Update tab styles
+            document.querySelectorAll('.tab').forEach(tab => {
                 tab.classList.remove('active');
             });
             element.classList.add('active');
             
+            // Update content
             document.querySelectorAll('.tab-content').forEach(content => {
                 content.classList.remove('active');
             });
-            
             document.getElementById(tabName + 'Tab').classList.add('active');
-            
-            if (tabName === 'activity') {
-                loadActivityHistory();
-            }
         }
 
-        // Transaction functions
-        async function sendTransaction() {
-            const recipient = document.getElementById('recipientAddress').value;
-            const amount = parseFloat(document.getElementById('sendAmount').value);
-            const password = document.getElementById('sendPassword').value;
+        function loadTransactionHistory() {
+            const container = document.getElementById('transactionHistory');
             
-            if (!recipient) {
-                showError('Please enter recipient address');
+            if (walletState.transactions.length === 0) {
                 return;
             }
             
-            if (!amount || amount <= 0) {
-                showError('Please enter a valid amount');
-                return;
-            }
+            container.innerHTML = walletState.transactions.map(tx => {
+                const isReceived = tx.type === 'received';
+                return `
+                    <div class="transaction-item">
+                        <div class="transaction-icon ${isReceived ? 'received' : 'sent'}">
+                            ${isReceived ? '📥' : '📤'}
+                        </div>
+                        <div class="transaction-details">
+                            <div class="transaction-type">${isReceived ? 'Received' : 'Sent'}</div>
+                            <div class="transaction-address">${isReceived ? tx.from : tx.to}</div>
+                            <div class="transaction-time">${formatTime(new Date(tx.timestamp))}</div>
+                        </div>
+                        <div class="transaction-amount">
+                            <div class="transaction-value ${isReceived ? 'positive' : 'negative'}">
+                                ${isReceived ? '+' : '-'}${tx.amount} QRC
+                            </div>
+                            <div class="transaction-usd">≈ ${(tx.amount * 0.001).toFixed(2)} USD</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function formatTime(date) {
+            const now = new Date();
+            const diff = now - date;
             
-            if (amount > walletState.balance) {
-                showError('Insufficient balance');
-                return;
-            }
+            if (diff < 60000) return 'Just now';
+            if (diff < 3600000) return Math.floor(diff / 60000) + ' min ago';
+            if (diff < 86400000) return Math.floor(diff / 3600000) + ' hours ago';
             
-            if (password.length < 8) {
-                showError('Please enter your password');
-                return;
-            }
-            
-            let twoFACode = '';
-            for (let i = 1; i <= 6; i++) {
-                twoFACode += document.getElementById(`transaction2FA${i}`).value;
-            }
-            
-            if (twoFACode.length !== 6) {
-                showError('Please enter the complete 6-digit Google Authenticator code');
-                return;
-            }
-            
+            return date.toLocaleDateString();
+        }
+
+        // Faucet function
+        async function getFaucet() {
             try {
-                const response = await fetch('/api/send', {
+                const response = await fetch('/api/faucet/claim', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify({
-                        from: walletState.address,
-                        to: recipient,
-                        amount,
-                        password,
-                        twoFA: twoFACode
+                        address: walletState.address
                     })
                 });
                 
                 const data = await response.json();
                 
                 if (data.success) {
-                    walletState.balance -= amount;
-                    updateWalletDisplay();
-                    closeModal('sendModal');
-                    clearSendForm();
-                    addActivity('transaction', 'Sent QRC', { 
-                        type: 'sent', 
-                        recipient, 
-                        amount 
+                    walletState.balance += 100;
+                    updateBalanceDisplay();
+                    showNotification('100 Test QRC received!', 'success');
+                    
+                    // Add to transaction history
+                    walletState.transactions.unshift({
+                        type: 'received',
+                        from: 'Faucet',
+                        amount: 100,
+                        timestamp: Date.now()
                     });
-                    showSuccess('Transaction sent successfully!');
-                    loadTransactions();
+                    
+                    loadTransactionHistory();
                 } else {
-                    showError(data.error || 'Transaction failed');
+                    showNotification(data.error || 'Faucet claim failed', 'error');
                 }
             } catch (error) {
-                console.error('Send error:', error);
-                showError('Network error. Please try again.');
+                showNotification('Failed to connect to faucet', 'error');
             }
         }
 
-        function clearSendForm() {
+        // Send transaction
+        function showSendModal() {
+            document.getElementById('sendModal').style.display = 'flex';
+            updateFeeDisplay();
+        }
+
+        function updateFeeDisplay() {
+            const amount = parseFloat(document.getElementById('sendAmount').value) || 0;
+            const fee = Math.max(amount * 0.002, 0.01);
+            document.getElementById('feeDisplay').textContent = fee.toFixed(2) + ' QRC';
+            document.getElementById('totalDisplay').textContent = (amount + fee).toFixed(2) + ' QRC';
+        }
+
+        function confirmSend() {
+            const recipient = document.getElementById('recipientAddress').value;
+            const amount = parseFloat(document.getElementById('sendAmount').value);
+            const password = document.getElementById('sendPassword').value;
+            
+            if (!recipient || !amount || !password) {
+                showNotification('Please fill in all fields', 'error');
+                return;
+            }
+            
+            if (password !== sessionPassword) {
+                showNotification('Invalid password', 'error');
+                return;
+            }
+            
+            if (!recipient.startsWith('QRC')) {
+                showNotification('Invalid address format', 'error');
+                return;
+            }
+            
+            const fee = Math.max(amount * 0.002, 0.01);
+            const total = amount + fee;
+            
+            if (total > walletState.balance) {
+                showNotification('Insufficient balance', 'error');
+                return;
+            }
+            
+            // Process transaction
+            walletState.balance -= total;
+            updateBalanceDisplay();
+            
+            // Add to transaction history
+            walletState.transactions.unshift({
+                type: 'sent',
+                to: recipient,
+                amount: amount,
+                fee: fee,
+                timestamp: Date.now()
+            });
+            
+            loadTransactionHistory();
+            
+            // Save updated state
+            const encrypted = CryptoJS.AES.encrypt(JSON.stringify(walletState), sessionPassword).toString();
+            localStorage.setItem('qrcWalletEncrypted', encrypted);
+            
+            showNotification('Transaction sent successfully!', 'success');
+            closeModal('sendModal');
+            
+            // Clear form
             document.getElementById('recipientAddress').value = '';
             document.getElementById('sendAmount').value = '';
             document.getElementById('sendPassword').value = '';
-            for (let i = 1; i <= 6; i++) {
-                document.getElementById(`transaction2FA${i}`).value = '';
-            }
         }
 
-        async function getFaucet() {
-            try {
-                const response = await fetch('/api/faucet', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ address: walletState.address })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    walletState.balance += 100;
-                    updateWalletDisplay();
-                    addActivity('transaction', 'Received QRC', { 
-                        type: 'received', 
-                        from: 'Faucet', 
-                        amount: 100 
-                    });
-                    showSuccess('100 QRC received from faucet!');
-                    loadTransactions();
-                } else {
-                    showError(data.error || 'Faucet request failed. Try again tomorrow.');
-                }
-            } catch (error) {
-                console.error('Faucet error:', error);
-                showError('Network error. Please try again.');
-            }
-        }
-
-        // Modal functions
-        function showSendModal() {
-            document.getElementById('sendModal').style.display = 'flex';
-        }
-
+        // Receive functions
         function showReceiveModal() {
             const modal = document.getElementById('receiveModal');
             modal.style.display = 'flex';
             
+            // Generate QR code
             if (receiveQrcode) {
                 document.getElementById('receiveQrcode').innerHTML = '';
             }
@@ -1652,229 +1279,18 @@
             document.getElementById('qrAddress').textContent = walletState.address;
         }
 
-        function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
-        }
-
         function copyAddress() {
             navigator.clipboard.writeText(walletState.address);
-            showSuccess('Address copied to clipboard!');
+            showNotification('Address copied to clipboard!', 'success');
         }
 
-        async function exportWallet() {
-            const confirmed = confirm('This will export your wallet private key. Keep it secure!');
-            if (!confirmed) return;
-            
-            try {
-                const response = await fetch('/api/export-wallet', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ address: walletState.address })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    const exportData = {
-                        address: walletState.address,
-                        privateKey: data.privateKey,
-                        timestamp: new Date().toISOString()
-                    };
-                    
-                    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `quantum-wallet-${walletState.address.substring(0, 8)}.json`;
-                    a.click();
-                    
-                    addActivity('security', 'Wallet Exported', { message: 'Private key exported' });
-                    showSuccess('Wallet exported successfully!');
-                } else {
-                    showError(data.error || 'Export failed');
-                }
-            } catch (error) {
-                console.error('Export error:', error);
-                showError('Network error. Please try again.');
+        // Check for existing session on load
+        window.onload = function() {
+            const hasWallet = localStorage.getItem('qrcWalletEncrypted');
+            if (!hasWallet) {
+                showNotification('Welcome! Create a new wallet to get started.', 'info');
             }
-        }
-
-        // Activity logging
-        function addActivity(type, action, details = {}) {
-            const activity = {
-                id: Date.now(),
-                type,
-                action,
-                details,
-                timestamp: new Date().toISOString()
-            };
-            
-            if (!walletState.activityLog) {
-                walletState.activityLog = [];
-            }
-            
-            walletState.activityLog.unshift(activity);
-            
-            // Keep only last 100 activities
-            if (walletState.activityLog.length > 100) {
-                walletState.activityLog = walletState.activityLog.slice(0, 100);
-            }
-            
-            if (document.getElementById('activityTab').classList.contains('active')) {
-                loadActivityHistory();
-            }
-        }
-
-        function loadActivityHistory() {
-            const container = document.getElementById('transactionList');
-            
-            if (!walletState.activityLog || walletState.activityLog.length === 0) {
-                container.innerHTML = '<p style="text-align: center; color: #666; padding: 40px;">No activities yet</p>';
-                return;
-            }
-            
-            const activities = walletState.activityLog.map(activity => {
-                const { icon, color, title, description } = formatActivity(activity);
-                const time = new Date(activity.timestamp).toLocaleString();
-                
-                return `
-                    <div class="transaction-item">
-                        <div class="transaction-icon" style="background: ${color}20; color: ${color};">
-                            ${icon}
-                        </div>
-                        <div class="transaction-details">
-                            <div class="transaction-type">${title}</div>
-                            <div class="transaction-address">${description}</div>
-                            <div class="transaction-time" style="font-size: 12px; color: #666; margin-top: 4px;">${time}</div>
-                        </div>
-                        ${activity.type === 'transaction' ? `
-                            <div class="transaction-amount">
-                                <div class="transaction-value ${activity.details.type === 'received' ? 'positive' : 'negative'}">
-                                    ${activity.details.type === 'received' ? '+' : '-'}${activity.details.amount} QRC
-                                </div>
-                                <div class="transaction-usd">≈ ${(activity.details.amount * 0.001).toFixed(2)} USD</div>
-                            </div>
-                        ` : ''}
-                    </div>
-                `;
-            }).join('');
-            
-            container.innerHTML = activities;
-        }
-
-        function formatActivity(activity) {
-            let icon, color, title, description;
-            
-            switch (activity.type) {
-                case 'transaction':
-                    if (activity.details.type === 'sent') {
-                        icon = '📤';
-                        color = '#ff6b6b';
-                        title = 'Sent QRC';
-                        description = `To: ${activity.details.recipient.substring(0, 12)}...`;
-                    } else if (activity.details.type === 'received') {
-                        icon = '📥';
-                        color = '#00ff88';
-                        title = 'Received QRC';
-                        description = activity.details.from ? `From: ${activity.details.from.substring(0, 12)}...` : 'From: Faucet';
-                    }
-                    break;
-                    
-                case 'security':
-                    icon = '🔒';
-                    color = '#ffa500';
-                    title = activity.action;
-                    description = activity.details.message || '';
-                    break;
-                    
-                case 'login':
-                    icon = activity.action === 'Login' ? '🔓' : '🔒';
-                    color = activity.action === 'Login' ? '#00ff88' : '#999';
-                    title = activity.action;
-                    description = activity.details.device ? `Device: ${activity.details.device.substring(0, 30)}...` : '';
-                    break;
-                    
-                case 'settings':
-                    icon = '⚙️';
-                    color = '#3498db';
-                    title = activity.action;
-                    description = activity.details.message || '';
-                    break;
-                    
-                default:
-                    icon = '📌';
-                    color = '#999';
-                    title = activity.action;
-                    description = activity.details.message || '';
-            }
-            
-            return { icon, color, title, description };
-        }
-
-        async function loadTransactions() {
-            try {
-                const response = await fetch(`/api/transactions/${walletState.address}`);
-                const data = await response.json();
-                
-                if (data.success && data.transactions) {
-                    walletState.transactions = data.transactions;
-                    
-                    // Add transactions to activity log
-                    data.transactions.forEach(tx => {
-                        const exists = walletState.activityLog.some(a => 
-                            a.type === 'transaction' && 
-                            a.details.txHash === tx.hash
-                        );
-                        
-                        if (!exists) {
-                            addActivity('transaction', tx.from === walletState.address ? 'Sent QRC' : 'Received QRC', {
-                                type: tx.from === walletState.address ? 'sent' : 'received',
-                                recipient: tx.to,
-                                from: tx.from,
-                                amount: tx.amount,
-                                txHash: tx.hash
-                            });
-                        }
-                    });
-                }
-            } catch (error) {
-                console.error('Load transactions error:', error);
-            }
-        }
-
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            initBackground();
-            setupTwoFAInputs();
-            
-            // Password strength checker
-            const newPasswordInput = document.getElementById('newPassword');
-            if (newPasswordInput) {
-                newPasswordInput.addEventListener('input', function() {
-                    checkPasswordStrength(this.value);
-                });
-            }
-            
-            // Close modals on background click
-            document.querySelectorAll('.modal').forEach(modal => {
-                modal.addEventListener('click', function(e) {
-                    if (e.target === this) {
-                        this.style.display = 'none';
-                    }
-                });
-            });
-            
-            // Handle Enter key
-            document.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    if (document.getElementById('loginForm').style.display !== 'none') {
-                        login();
-                    } else if (document.getElementById('createWalletForm').style.display !== 'none') {
-                        createWallet();
-                    }
-                }
-            });
-        });
+        };
     </script>
 </body>
 </html>
