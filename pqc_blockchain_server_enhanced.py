@@ -22,7 +22,7 @@ import base64
 import bcrypt
 import time
 from functools import wraps
-from mwa_aut import setup_master_routes
+
 
 # Load environment variables
 load_dotenv('.mwa_cfg')
@@ -44,7 +44,7 @@ limiter = Limiter(
     default_limits=["200 per day", "50 per hour"],
     storage_uri="memory://",
 )
-setup_master_routes(app, limiter)
+
 
 # DDoS Protection
 request_counts = defaultdict(lambda: {"count": 0, "timestamp": time.time()})
