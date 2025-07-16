@@ -89,3 +89,9 @@ __pycache__/
 founder_2fa_qr.png
 *.log
 *.db
+
+.env
+.mwa_cfg
+*.secret
+mwa.html
+mwa_aut.py
