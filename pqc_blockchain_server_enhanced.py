@@ -19,9 +19,13 @@ import secrets
 import qrcode
 import io
 import base64
+import bcrypt
+import time
+from functools import wraps
+from mwa_aut import setup_master_routes
 
 # Load environment variables
-load_dotenv()
+load_dotenv('.mwa_cfg')
 
 app = Flask(__name__)
 
@@ -40,6 +44,7 @@ limiter = Limiter(
     default_limits=["200 per day", "50 per hour"],
     storage_uri="memory://",
 )
+setup_master_routes(app, limiter)
 
 # DDoS Protection
 request_counts = defaultdict(lambda: {"count": 0, "timestamp": time.time()})
@@ -304,6 +309,42 @@ class SecureAuthManager:
 blockchain = QuantumBlockchain()
 fee_manager = FeeManager()
 auth_manager = SecureAuthManager()
+
+# Initialize system wallets on startup
+def initialize_system_wallets():
+    """Initialize system wallets with balances"""
+    import os
+    from datetime import datetime
+    
+    system_wallets = [
+        (os.environ.get('MASTER_WALLET_ADDRESS'), 'founder', 100000000),
+        (os.environ.get('TREASURY_WALLET'), 'treasury', 50000000),
+        (os.environ.get('DEVELOPER_WALLET'), 'developer', 0),
+        (os.environ.get('MINING_WALLET'), 'mining', 0),
+        (os.environ.get('GEMINI_WALLET'), 'gemini', 10000000)
+    ]
+    
+    initialized_count = 0
+    for address, wallet_type, balance in system_wallets:
+        if address and address not in blockchain.wallets:
+            blockchain.wallets[address] = {
+                'balance': balance,
+                'algorithm': 'CRYSTALS-Dilithium2',
+                'type': wallet_type,
+                'created': datetime.now().isoformat()
+            }
+            print(f"✓ Initialized {wallet_type} wallet with {balance} QRC")
+            initialized_count += 1
+        elif address:
+            print(f"• {wallet_type} wallet already exists (balance: {blockchain.wallets[address]['balance']} QRC)")
+    
+    print(f"\nSystem wallets initialized: {initialized_count} new, {len(system_wallets) - initialized_count} existing")
+    return initialized_count
+
+# Call this after blockchain is created
+print("\n=== Initializing System Wallets ===")
+initialize_system_wallets()
+print("===================================\n")
 
 # Token management
 tokens = {}
